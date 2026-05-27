@@ -143,16 +143,27 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "ss01", "cv11", "tnum";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   .font-mono, code, kbd, samp, pre {
     font-family: var(--font-mono);
   }
+  .font-serif {
+    font-family: var(--font-serif);
+    font-feature-settings: "ss01";
+  }
+  .display {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.012em;
+  }
   .eyebrow {
     font-family: var(--font-mono);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 11px;
+    letter-spacing: 0.14em;
+    font-size: 10px;
     color: var(--muted-foreground);
   }
   @media print {
