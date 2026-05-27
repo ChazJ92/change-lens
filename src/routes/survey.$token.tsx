@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/brand";
 
 export const Route = createFileRoute("/survey/$token")({
   head: () => ({ meta: [{ title: "Stakeholder survey — ChangeLens" }] }),
