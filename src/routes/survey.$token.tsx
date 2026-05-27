@@ -9,7 +9,7 @@ import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/survey/$token")({
-  head: () => ({ meta: [{ title: "Stakeholder survey — CORE7" }] }),
+  head: () => ({ meta: [{ title: "Stakeholder survey — ChangeLens" }] }),
   component: SurveyPage,
 });
 
@@ -142,10 +142,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background py-10 px-6">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="h-6 w-6" style={{ background: "var(--navy)" }} />
-          <span className="font-mono text-xs font-medium tracking-wider">CORE7</span>
-          <span className="text-xs text-muted-foreground ml-auto">Stakeholder survey</span>
+        <div className="flex items-center mb-8">
+          <Wordmark size="sm" />
+          <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground ml-auto">Stakeholder survey</span>
         </div>
         {children}
       </div>
