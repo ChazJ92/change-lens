@@ -73,10 +73,9 @@ function Dashboard() {
       const scoreRows = rows.map((r: any) => ({ score: r.final_score ?? r.provisional_score, weight: r.weight, weight_override: r.weight_override }));
       const overall = weightedOverall(scoreRows);
       const band = readinessBand(overall);
+      const confMap: Record<string, number> = { "Very High": 95, High: 80, Moderate: 60, Low: 35 };
       const conf = rows.length
-        ? Math.round(
-            rows.reduce((s: number, r: any) => s + ({ "Very High": 95, High: 80, Moderate: 60, Low: 35 } as any)[r.confidence ?? ""] ?? 0, 0) / rows.length,
-          )
+        ? Math.round(rows.reduce((s: number, r: any) => s + (confMap[r.confidence ?? ""] ?? 0), 0) / rows.length)
         : 0;
       return { ...a, overall, band, conf, pillarCount: rows.length };
     });
