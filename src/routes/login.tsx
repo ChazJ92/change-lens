@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Wordmark } from "@/components/brand";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — CORE7" }] }),
+  head: () => ({ meta: [{ title: "Sign in — ChangeLens" }] }),
   component: LoginPage,
 });
 
@@ -69,25 +70,22 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-background text-foreground grid md:grid-cols-2">
       <aside className="hidden md:flex flex-col justify-between border-r border-border bg-card p-12">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-7 w-7" style={{ background: "var(--navy)" }} />
-          <span className="font-mono text-sm font-medium tracking-wider">CORE7</span>
-        </Link>
+        <Link to="/"><Wordmark size="sm" /></Link>
         <div>
-          <p className="eyebrow mb-3">Enterprise transformation readiness</p>
-          <h2 className="text-3xl font-semibold tracking-tight leading-tight max-w-md" style={{ color: "var(--navy)" }}>
-            Assess seven domains. Explain every score. Approve every decision.
+          <p className="eyebrow mb-4">Strategic assurance for transformation</p>
+          <h2 className="display text-[34px] leading-[1.1] tracking-tight max-w-md" style={{ color: "var(--ink)" }}>
+            Evidence-led readiness for complex change.
           </h2>
-          <p className="mt-4 text-sm text-muted-foreground max-w-md">
-            CORE7 measures readiness across Strategy &amp; Leadership, Data Quality &amp; Insight, Process Maturity, Technology &amp; Tooling, People &amp; Capability, Governance &amp; Risk and Organisational Adaptability — with mandatory human review before any score is finalised.
+          <p className="mt-5 text-sm leading-relaxed text-muted-foreground max-w-md">
+            ChangeLens scores readiness across the seven CORE7 domains, governs every decision with mandatory human review, and keeps a full audit trail from evidence to boardroom score.
           </p>
         </div>
-        <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider">© CORE7 · MVP</p>
+        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-[0.18em]">© ChangeLens · Powered by the CORE7 framework</p>
       </aside>
 
       <div className="flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--ink)" }}>
             {mode === "signin" ? "Sign in" : "Create your account"}
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
