@@ -21,7 +21,6 @@ import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
-import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authenticated.app.reports.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -86,6 +85,12 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
     id: '/pillars/$pillarId',
     path: '/pillars/$pillarId',
     getParentRoute: () => AuthenticatedAppAssessmentsIdRoute,
+  } as any)
+const AuthenticatedAppReportsIdRoute =
+  AuthenticatedAppReportsIdRouteImport.update({
+    id: '/app/reports/$id',
+    path: '/app/reports/$id',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
