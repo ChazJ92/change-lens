@@ -6,6 +6,8 @@ import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/li
 import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReviewPanel, StatusTransitionPanel } from "@/components/review-panel";
+import { EvidencePanel } from "@/components/evidence-panel";
+import { SurveyPublishPanel } from "@/components/survey-publish-panel";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -172,6 +174,8 @@ function PillarDetail() {
             <>
               <ReviewPanel pa={pa} assessmentId={id} organisationId={organisationId} pillarName={pillar.name} />
               <StatusTransitionPanel pa={pa} onChange={(s) => transition.mutate(s)} />
+              <EvidencePanel assessmentId={id} organisationId={organisationId} pillarAssessmentId={pa.id} />
+              <SurveyPublishPanel assessmentId={id} pillarId={pillarId} pillarName={pillar.name} />
             </>
           )}
           <Section title="Review comments" icon={<MessageSquare className="h-4 w-4" />}>
