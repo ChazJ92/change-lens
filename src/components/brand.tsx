@@ -87,31 +87,29 @@ export function Wordmark({
   }[size];
 
   return (
-    <div className={cn("inline-flex items-start", sizes.gap, className)}>
+    <div className={cn("inline-grid grid-cols-[auto_auto] items-start gap-y-2", sizes.gap, className)}>
       <LensMark
         size={sizes.mark}
         tone={tone === "inverse" ? "inverse" : "primary"}
-        className="shrink-0 translate-y-[1px]"
+        className="shrink-0 self-center"
       />
-      <div className="leading-none flex flex-col justify-center" style={{ minHeight: sizes.mark }}>
-        <div
-          className={cn(sizes.text, "font-medium tracking-[-0.018em]")}
-          style={{ color }}
-        >
-          ChangeLens
-        </div>
-        {withFramework && (
-          <div
-            className={cn(
-              sizes.sub,
-              "font-mono uppercase tracking-[0.22em] mt-2 font-medium",
-            )}
-            style={{ color: subColor }}
-          >
-            Powered by the <span style={{ color: accent }}>CORE7</span> framework
-          </div>
-        )}
+      <div
+        className={cn(sizes.text, "self-center font-medium leading-none tracking-[-0.018em]")}
+        style={{ color }}
+      >
+        ChangeLens
       </div>
+      {withFramework && (
+        <div
+          className={cn(
+            sizes.sub,
+            "col-start-2 font-mono uppercase tracking-[0.22em] font-medium",
+          )}
+          style={{ color: subColor }}
+        >
+          Powered by the <span style={{ color: accent }}>CORE7</span> framework
+        </div>
+      )}
     </div>
   );
 }
