@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Wordmark } from "@/components/brand";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -85,12 +86,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex">
       {/* Sidebar */}
       <aside className="w-60 shrink-0 border-r border-border bg-card hidden md:flex flex-col">
-        <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
-          <div className="h-7 w-7" style={{ background: "var(--navy)" }} />
-          <div>
-            <div className="font-mono text-[13px] font-semibold tracking-wider leading-none">CORE7</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Readiness platform</div>
-          </div>
+        <div className="px-5 py-5 border-b border-border">
+          <Wordmark size="sm" withFramework />
         </div>
 
         <DropdownMenu open={orgMenu} onOpenChange={setOrgMenu}>
