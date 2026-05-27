@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +30,7 @@ function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      const supabase = await getSupabaseBrowserClient();
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -56,6 +56,7 @@ function LoginPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
+      const { lovable } = await import("@/integrations/lovable");
       const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/app" });
       if (result.error) throw result.error;
     } catch (err: any) {
