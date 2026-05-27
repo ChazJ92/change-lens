@@ -87,9 +87,13 @@ export function Wordmark({
   }[size];
 
   return (
-    <div className={cn("inline-flex items-center", sizes.gap, className)}>
-      <LensMark size={sizes.mark} tone={tone === "inverse" ? "inverse" : "primary"} />
-      <div className="leading-none">
+    <div className={cn("inline-flex items-start", sizes.gap, className)}>
+      <LensMark
+        size={sizes.mark}
+        tone={tone === "inverse" ? "inverse" : "primary"}
+        className="shrink-0 translate-y-[1px]"
+      />
+      <div className="leading-none flex flex-col justify-center" style={{ minHeight: sizes.mark }}>
         <div
           className={cn(sizes.text, "font-medium tracking-[-0.018em]")}
           style={{ color }}
