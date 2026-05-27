@@ -46,9 +46,10 @@ function PillarDetail() {
   });
 
   const transition = useMutation({
-    mutationFn: async (status: string) => {
+    mutationFn: async (status: any) => {
       const supabase = await getSupabaseBrowserClient();
-      const { error } = await supabase.from("pillar_assessments").update({ status }).eq("id", data!.pa.id);
+      if (!data?.pa?.id) return;
+      const { error } = await supabase.from("pillar_assessments").update({ status }).eq("id", data.pa.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["pillar"] }); },
