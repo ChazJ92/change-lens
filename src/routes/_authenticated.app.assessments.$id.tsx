@@ -6,7 +6,7 @@ import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/assessments/$id")({
+export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
   component: AssessmentOverview,
 });
 

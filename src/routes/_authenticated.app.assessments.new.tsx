@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/assessments/new")({
+export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
 });
 
