@@ -13,6 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
