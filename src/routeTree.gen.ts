@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SurveyTokenRouteImport } from './routes/survey.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated.app.reviews'
@@ -32,6 +33,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurveyTokenRoute = SurveyTokenRouteImport.update({
+  id: '/survey/$token',
+  path: '/survey/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
@@ -77,6 +83,7 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/survey/$token': typeof SurveyTokenRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/survey/$token': typeof SurveyTokenRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/survey/$token': typeof SurveyTokenRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/survey/$token'
     | '/app/reviews'
     | '/api/ai/verify'
     | '/app/'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/survey/$token'
     | '/app/reviews'
     | '/api/ai/verify'
     | '/app'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/survey/$token'
     | '/_authenticated/app/reviews'
     | '/api/ai/verify'
     | '/_authenticated/app/'
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SurveyTokenRoute: typeof SurveyTokenRoute
   ApiAiVerifyRoute: typeof ApiAiVerifyRoute
 }
 
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/survey/$token': {
+      id: '/survey/$token'
+      path: '/survey/$token'
+      fullPath: '/survey/$token'
+      preLoaderRoute: typeof SurveyTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
@@ -268,6 +288,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  SurveyTokenRoute: SurveyTokenRoute,
   ApiAiVerifyRoute: ApiAiVerifyRoute,
 }
 export const routeTree = rootRouteImport
