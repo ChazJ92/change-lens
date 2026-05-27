@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
+import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated.app.reviews'
 import { Route as AuthenticatedAppSettingsAiRouteImport } from './routes/_authenticated.app.settings.ai'
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
@@ -43,6 +44,11 @@ const ApiAiVerifyRoute = ApiAiVerifyRouteImport.update({
   path: '/api/ai/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppReviewsRoute = AuthenticatedAppReviewsRouteImport.update({
+  id: '/app/reviews',
+  path: '/app/reviews',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAppSettingsAiRoute =
   AuthenticatedAppSettingsAiRouteImport.update({
     id: '/app/settings/ai',
@@ -71,6 +77,7 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/app/reviews'
     | '/api/ai/verify'
     | '/app/'
     | '/app/assessments/$id'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/app/reviews'
     | '/api/ai/verify'
     | '/app'
     | '/app/assessments/$id'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/app/reviews'
     | '/api/ai/verify'
     | '/_authenticated/app/'
     | '/_authenticated/app/assessments/$id'
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/reviews': {
+      id: '/_authenticated/app/reviews'
+      path: '/app/reviews'
+      fullPath: '/app/reviews'
+      preLoaderRoute: typeof AuthenticatedAppReviewsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/settings/ai': {
       id: '/_authenticated/app/settings/ai'
       path: '/app/settings/ai'
@@ -225,6 +244,7 @@ const AuthenticatedAppAssessmentsIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAssessmentsIdRoute: typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   AuthenticatedAppAssessmentsNewRoute: typeof AuthenticatedAppAssessmentsNewRoute
@@ -232,6 +252,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppAssessmentsIdRoute:
     AuthenticatedAppAssessmentsIdRouteWithChildren,
