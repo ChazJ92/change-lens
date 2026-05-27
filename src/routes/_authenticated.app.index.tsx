@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, fmtDate, fmtRelative, ASSESSMENT_STATUS_LABELS } from "@/lib/scoring";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ function Dashboard() {
     queryKey: ["assessments", orgId],
     enabled: !!orgId,
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const { data, error } = await supabase
         .from("assessments")
         .select("id, name, status, scope_level, complexity_level, transformation_profile, business_area, target_completion_date, created_at, updated_at, description")
@@ -35,6 +36,7 @@ function Dashboard() {
     queryKey: ["pillars-all", orgId],
     enabled: !!orgId && !!assessments?.length,
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const ids = assessments!.map((a) => a.id);
       const [{ data: pa }, { data: p }] = await Promise.all([
         supabase.from("pillar_assessments").select("assessment_id, pillar_id, final_score, provisional_score, confidence, weight_override, status").in("assessment_id", ids),
@@ -52,6 +54,7 @@ function Dashboard() {
     queryKey: ["activity", orgId],
     enabled: !!orgId,
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const { data } = await supabase
         .from("audit_logs")
         .select("id, event_type, detail, actor_email, created_at")
