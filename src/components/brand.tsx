@@ -87,14 +87,14 @@ export function Wordmark({
   }[size];
 
   return (
-    <div className={cn("inline-grid grid-cols-[auto_auto] items-start", sizes.gap, className)}>
+    <div className={cn("inline-grid grid-cols-[auto_auto] items-start gap-y-2", sizes.gap, className)}>
       <LensMark
         size={sizes.mark}
         tone={tone === "inverse" ? "inverse" : "primary"}
         className="shrink-0 self-center"
       />
       <div
-        className={cn(sizes.text, "font-medium leading-none tracking-[-0.018em]")}
+        className={cn(sizes.text, "self-center font-medium leading-none tracking-[-0.018em]")}
         style={{ color }}
       >
         ChangeLens
