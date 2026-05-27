@@ -85,19 +85,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 border-r border-border bg-card hidden md:flex flex-col">
-        <div className="px-5 py-5 border-b border-border">
-          <Wordmark size="sm" withFramework />
+      <aside
+        className="w-60 shrink-0 hidden md:flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border"
+      >
+        <div className="px-5 py-5 border-b border-sidebar-border">
+          <Wordmark size="sm" tone="inverse" withFramework />
         </div>
 
         <DropdownMenu open={orgMenu} onOpenChange={setOrgMenu}>
           <DropdownMenuTrigger asChild>
-            <button className="mx-3 mt-3 px-3 py-2.5 rounded-sm border border-border bg-background hover:bg-secondary text-left flex items-center justify-between gap-2 cursor-pointer transition-colors">
+            <button className="mx-3 mt-3 px-3 py-2.5 rounded-sm border border-sidebar-border bg-sidebar-accent/40 hover:bg-sidebar-accent text-left flex items-center justify-between gap-2 cursor-pointer transition-colors">
               <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Organisation</div>
-                <div className="text-sm font-medium truncate">{current?.name ?? "Loading…"}</div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-sidebar-foreground/60">Organisation</div>
+                <div className="text-sm font-medium truncate text-sidebar-foreground">{current?.name ?? "Loading…"}</div>
               </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-sidebar-foreground/60" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
@@ -126,7 +128,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 to={item.to}
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-sm text-sm transition-colors",
-                  active ? "bg-secondary text-foreground font-medium" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  active
+                    ? "bg-sidebar-accent text-sidebar-foreground font-medium border-l-2 border-primary pl-[10px]"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -136,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="border-t border-border px-3 py-3 text-[11px] text-muted-foreground space-y-1">
+        <div className="border-t border-sidebar-border px-3 py-3 text-[11px] text-sidebar-foreground/60 space-y-1">
           <div className="flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
             <span>AI not configured</span>
