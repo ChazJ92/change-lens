@@ -86,12 +86,6 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
     path: '/pillars/$pillarId',
     getParentRoute: () => AuthenticatedAppAssessmentsIdRoute,
   } as any)
-const AuthenticatedAppReportsIdRoute =
-  AuthenticatedAppReportsIdRouteImport.update({
-    id: '/app/reports/$id',
-    path: '/app/reports/$id',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
