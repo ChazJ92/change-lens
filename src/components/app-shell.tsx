@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
@@ -37,6 +37,7 @@ export function useCurrentOrg() {
     queryKey: ["current-org", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const { data, error } = await supabase
         .from("memberships")
         .select("organisation_id, role, organisations(id, name, is_demo)")
@@ -65,6 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const current = data?.current;
 
   async function signOut() {
+    const supabase = await getSupabaseBrowserClient();
     await supabase.auth.signOut();
     navigate({ to: "/login" });
   }
