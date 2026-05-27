@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
 import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History, Lock } from "lucide-react";
@@ -16,6 +16,7 @@ function PillarDetail() {
   const { data, isLoading } = useQuery({
     queryKey: ["pillar", id, pillarId],
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const [pillar, pa, questions, comments, overrides, risks, recs] = await Promise.all([
         supabase.from("pillars").select("*").eq("id", pillarId).single(),
         supabase.from("pillar_assessments").select("*").eq("assessment_id", id).eq("pillar_id", pillarId).single(),
