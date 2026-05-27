@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useCurrentOrg, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ function NewAssessment() {
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
+      const supabase = await getSupabaseBrowserClient();
       const { data: a, error } = await supabase
         .from("assessments")
         .insert({
