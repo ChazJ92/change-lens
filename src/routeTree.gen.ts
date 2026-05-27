@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
+import { Route as AuthenticatedAppSettingsAiRouteImport } from './routes/_authenticated.app.settings.ai'
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
@@ -42,6 +43,12 @@ const ApiAiVerifyRoute = ApiAiVerifyRouteImport.update({
   path: '/api/ai/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppSettingsAiRoute =
+  AuthenticatedAppSettingsAiRouteImport.update({
+    id: '/app/settings/ai',
+    path: '/app/settings/ai',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppAssessmentsNewRoute =
   AuthenticatedAppAssessmentsNewRouteImport.update({
     id: '/app/assessments/new',
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +85,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
 export interface FileRoutesById {
@@ -88,6 +97,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/_authenticated/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/_authenticated/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/_authenticated/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/assessments/$id'
     | '/app/assessments/new'
+    | '/app/settings/ai'
     | '/app/assessments/$id/pillars/$pillarId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/assessments/$id'
     | '/app/assessments/new'
+    | '/app/settings/ai'
     | '/app/assessments/$id/pillars/$pillarId'
   id:
     | '__root__'
@@ -118,6 +130,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/app/assessments/$id'
     | '/_authenticated/app/assessments/new'
+    | '/_authenticated/app/settings/ai'
     | '/_authenticated/app/assessments/$id/pillars/$pillarId'
   fileRoutesById: FileRoutesById
 }
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/settings/ai': {
+      id: '/_authenticated/app/settings/ai'
+      path: '/app/settings/ai'
+      fullPath: '/app/settings/ai'
+      preLoaderRoute: typeof AuthenticatedAppSettingsAiRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/assessments/new': {
       id: '/_authenticated/app/assessments/new'
       path: '/app/assessments/new'
@@ -208,6 +228,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAssessmentsIdRoute: typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   AuthenticatedAppAssessmentsNewRoute: typeof AuthenticatedAppAssessmentsNewRoute
+  AuthenticatedAppSettingsAiRoute: typeof AuthenticatedAppSettingsAiRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -215,6 +236,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppAssessmentsIdRoute:
     AuthenticatedAppAssessmentsIdRouteWithChildren,
   AuthenticatedAppAssessmentsNewRoute: AuthenticatedAppAssessmentsNewRoute,
+  AuthenticatedAppSettingsAiRoute: AuthenticatedAppSettingsAiRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
