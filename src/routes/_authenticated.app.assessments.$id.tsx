@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
-import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer } from "lucide-react";
+import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
@@ -53,7 +53,10 @@ function AssessmentOverview() {
         actions={
           <>
             <StatusChip label={ASSESSMENT_STATUS_LABELS[a.status]} tone={statusTone} />
-            <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-3.5 w-3.5" /> Print report</Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/app/reports/$id" params={{ id }}><FileBarChart2 className="h-3.5 w-3.5" /> Final report</Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => window.print()}><Printer className="h-3.5 w-3.5" /> Print</Button>
           </>
         }
       >

@@ -13,6 +13,8 @@ import {
   Sparkles,
   Plus,
   Search,
+  ShieldCheck,
+  FileBarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +31,7 @@ import { Input } from "@/components/ui/input";
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app", label: "Assessments", icon: ClipboardList },
+  { to: "/app/reviews", label: "Reviewer queue", icon: ShieldCheck },
 ];
 
 export function useCurrentOrg() {
@@ -168,7 +171,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="text-muted-foreground font-normal">{user?.email}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled><Settings className="h-4 w-4 mr-2" /> Admin (coming)</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/app/settings/ai"><Sparkles className="h-4 w-4 mr-2" /> AI settings</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem disabled><Users className="h-4 w-4 mr-2" /> Team (coming)</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}><LogOut className="h-4 w-4 mr-2" /> Sign out</DropdownMenuItem>

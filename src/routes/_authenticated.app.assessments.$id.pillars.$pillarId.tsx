@@ -5,6 +5,9 @@ import { PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
 import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ReviewPanel, StatusTransitionPanel } from "@/components/review-panel";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/$id/pillars/$pillarId")({
   component: PillarDetail,
@@ -12,12 +15,13 @@ export const Route = createFileRoute("/_authenticated/app/assessments/$id/pillar
 
 function PillarDetail() {
   const { id, pillarId } = Route.useParams();
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["pillar", id, pillarId],
     queryFn: async () => {
       const supabase = await getSupabaseBrowserClient();
-      const [pillar, pa, questions, comments, overrides, risks, recs] = await Promise.all([
+      const [pillar, pa, questions, comments, overrides, risks, recs, assessment] = await Promise.all([
         supabase.from("pillars").select("*").eq("id", pillarId).single(),
         supabase.from("pillar_assessments").select("*").eq("assessment_id", id).eq("pillar_id", pillarId).single(),
         supabase.from("questions").select("*").eq("pillar_id", pillarId).order("display_order"),
@@ -25,6 +29,7 @@ function PillarDetail() {
         supabase.from("score_overrides").select("*"),
         supabase.from("risks").select("*").eq("assessment_id", id).eq("pillar_id", pillarId),
         supabase.from("recommendations").select("*").eq("assessment_id", id).eq("pillar_id", pillarId),
+        supabase.from("assessments").select("organisation_id").eq("id", id).single(),
       ]);
       const paId = pa.data?.id;
       return {
@@ -35,13 +40,25 @@ function PillarDetail() {
         overrides: (overrides.data ?? []).filter((o: any) => o.pillar_assessment_id === paId),
         risks: risks.data ?? [],
         recs: recs.data ?? [],
+        organisationId: assessment.data?.organisation_id as string | undefined,
       };
     },
   });
 
+  const transition = useMutation({
+    mutationFn: async (status: any) => {
+      const supabase = await getSupabaseBrowserClient();
+      if (!data?.pa?.id) return;
+      const { error } = await supabase.from("pillar_assessments").update({ status }).eq("id", data.pa.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["pillar"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
   if (isLoading || !data?.pillar) return <div className="p-8 text-sm text-muted-foreground">Loading pillar…</div>;
 
-  const { pillar, pa, questions, comments, overrides, risks, recs } = data;
+  const { pillar, pa, questions, comments, overrides, risks, recs, organisationId } = data;
   const raw = pa?.final_score ?? pa?.provisional_score;
   const mapped = mapScore(raw);
   const band = readinessBand(mapped);
@@ -151,6 +168,12 @@ function PillarDetail() {
         </div>
 
         <aside className="space-y-6">
+          {pa && organisationId && (
+            <>
+              <ReviewPanel pa={pa} assessmentId={id} organisationId={organisationId} pillarName={pillar.name} />
+              <StatusTransitionPanel pa={pa} onChange={(s) => transition.mutate(s)} />
+            </>
+          )}
           <Section title="Review comments" icon={<MessageSquare className="h-4 w-4" />}>
             {comments.length === 0 ? <Empty msg="No reviewer comments yet." /> : (
               <ul className="space-y-3">{comments.map((c: any) => (
