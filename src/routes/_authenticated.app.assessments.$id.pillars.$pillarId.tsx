@@ -6,7 +6,7 @@ import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/li
 import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/assessments/$id/pillars/$pillarId")({
+export const Route = createFileRoute("/_authenticated/app/assessments/$id/pillars/$pillarId")({
   component: PillarDetail,
 });
 
