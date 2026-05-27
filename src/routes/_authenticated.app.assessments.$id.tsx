@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer } from "lucide-react";
@@ -16,6 +16,7 @@ function AssessmentOverview() {
   const { data, isLoading } = useQuery({
     queryKey: ["assessment", id],
     queryFn: async () => {
+      const supabase = await getSupabaseBrowserClient();
       const [a, pa, p, r, risks, recs, act] = await Promise.all([
         supabase.from("assessments").select("*").eq("id", id).single(),
         supabase.from("pillar_assessments").select("*").eq("assessment_id", id),
