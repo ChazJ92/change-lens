@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
+import { AiConfigBanner } from "@/components/ai-gate";
+import { useAiSettings, aiEnabled } from "@/lib/ai-config";
 import { weightedOverall, readinessBand, fmtDate, fmtRelative, ASSESSMENT_STATUS_LABELS } from "@/lib/scoring";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/app/")({
 function Dashboard() {
   const { data: orgData } = useCurrentOrg();
   const orgId = orgData?.current?.id;
+  const { data: aiSettings } = useAiSettings(orgId);
 
   const { data: assessments, isLoading } = useQuery({
     queryKey: ["assessments", orgId],
@@ -128,6 +131,9 @@ function Dashboard() {
 
       <div className="px-8 py-6 max-w-[1400px] grid lg:grid-cols-[1fr_320px] gap-8">
         <section>
+          {!aiEnabled(aiSettings) && (
+            <AiConfigBanner settings={aiSettings} className="mb-4" />
+          )}
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Assessments</h2>
             <div className="flex items-center gap-2">

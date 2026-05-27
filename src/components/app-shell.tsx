@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/brand";
+import { useAiSettings, aiEnabled, PROVIDER_LABELS } from "@/lib/ai-config";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -68,6 +69,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const orgs = data?.orgs ?? [];
   const current = data?.current;
+  const { data: aiSettings } = useAiSettings(current?.id);
+  const aiOn = aiEnabled(aiSettings);
 
   async function signOut() {
     const supabase = await getSupabaseBrowserClient();
@@ -142,10 +145,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="border-t border-sidebar-border px-3 py-3 text-[11px] text-sidebar-foreground/60 space-y-1">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" />
-            <span>AI not configured</span>
+            <Sparkles className="h-3 w-3" style={{ color: aiOn ? "var(--success)" : undefined }} />
+            <span className="text-sidebar-foreground/80">
+              {aiOn
+                ? `AI · ${PROVIDER_LABELS[aiSettings!.provider]} · ${aiSettings!.model}`
+                : "AI not configured"}
+            </span>
           </div>
-          <p className="leading-snug">Configure your own OpenAI key in admin to enable AI analysis. The platform works fully without it.</p>
+          <p className="leading-snug">
+            {aiOn
+              ? `Key ending ${aiSettings!.api_key_last4}. AI rationale and confidence are enabled across this organisation.`
+              : "Configure a verified provider key in admin to unlock AI rationale, evidence triage and confidence. Manual workflow works fully without it."}
+          </p>
         </div>
       </aside>
 

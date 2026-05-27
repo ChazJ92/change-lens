@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
-import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History } from "lucide-react";
 import { ReviewPanel, StatusTransitionPanel } from "@/components/review-panel";
 import { EvidencePanel } from "@/components/evidence-panel";
 import { SurveyPublishPanel } from "@/components/survey-publish-panel";
+import { AiActionButton, AiConfigBanner } from "@/components/ai-gate";
+import { useAiSettings, aiEnabled } from "@/lib/ai-config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -61,6 +62,7 @@ function PillarDetail() {
   if (isLoading || !data?.pillar) return <div className="p-8 text-sm text-muted-foreground">Loading pillar…</div>;
 
   const { pillar, pa, questions, comments, overrides, risks, recs, organisationId } = data;
+  const { data: aiSettings } = useAiSettings(organisationId);
   const raw = pa?.final_score ?? pa?.provisional_score;
   const mapped = mapScore(raw);
   const band = readinessBand(mapped);
@@ -100,6 +102,9 @@ function PillarDetail() {
 
       <div className="px-8 py-6 max-w-[1400px] grid lg:grid-cols-[1fr_340px] gap-8">
         <div className="space-y-6 min-w-0">
+          {!aiEnabled(aiSettings) && (
+            <AiConfigBanner settings={aiSettings} />
+          )}
           {/* AI Explainability — hero block */}
           <div className="border border-primary/30 rounded-sm bg-card p-5">
             <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
@@ -112,9 +117,15 @@ function PillarDetail() {
                   <span className="eyebrow ml-2">Not run</span>
                 )}
               </div>
-              <Button size="sm" variant="outline" disabled title="Configure AI in admin to enable">
-                <Lock className="h-3.5 w-3.5" /> Run analysis
-              </Button>
+              <AiActionButton
+                settings={aiSettings}
+                label="Run analysis"
+                onRun={() =>
+                  toast.info(
+                    "AI is configured. Per-pillar analysis runs are queued from this control in the next release.",
+                  )
+                }
+              />
             </div>
             {pa?.ai_rationale ? (
               <div className="grid md:grid-cols-2 gap-5">
