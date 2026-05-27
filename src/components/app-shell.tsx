@@ -209,7 +209,7 @@ export function PageHeader({
             {eyebrow && (
               <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground mb-2">{eyebrow}</div>
             )}
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>{title}</h1>
+            <h1 className="display text-[28px] leading-[1.1] tracking-[-0.018em]" style={{ color: "var(--ink)" }}>{title}</h1>
             {description && <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl">{description}</p>}
           </div>
           {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
