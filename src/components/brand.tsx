@@ -100,17 +100,16 @@ export function Wordmark({
         ChangeLens
       </div>
       {withFramework && (
-        {withFramework && (
-          <div
-            className={cn(
-              sizes.sub,
-              "col-start-2 font-mono uppercase tracking-[0.22em] font-medium",
-            )}
-            style={{ color: subColor }}
-          >
-            Powered by the <span style={{ color: accent }}>CORE7</span> framework
-          </div>
-        )}
+        <div
+          className={cn(
+            sizes.sub,
+            "col-start-2 font-mono uppercase tracking-[0.22em] font-medium",
+          )}
+          style={{ color: subColor }}
+        >
+          Powered by the <span style={{ color: accent }}>CORE7</span> framework
+        </div>
+      )}
     </div>
   );
 }
