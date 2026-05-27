@@ -17,6 +17,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated.app.reviews'
 import { Route as AuthenticatedAppSettingsAiRouteImport } from './routes/_authenticated.app.settings.ai'
+import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authenticated.app.reports.$id'
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
@@ -61,6 +62,12 @@ const AuthenticatedAppSettingsAiRoute =
     path: '/app/settings/ai',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAppReportsIdRoute =
+  AuthenticatedAppReportsIdRouteImport.update({
+    id: '/app/reports/$id',
+    path: '/app/reports/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppAssessmentsNewRoute =
   AuthenticatedAppAssessmentsNewRouteImport.update({
     id: '/app/assessments/new',
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/app/reports/$id': typeof AuthenticatedAppReportsIdRoute
   '/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/app/reports/$id': typeof AuthenticatedAppReportsIdRoute
   '/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/assessments/$id': typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   '/_authenticated/app/assessments/new': typeof AuthenticatedAppAssessmentsNewRoute
+  '/_authenticated/app/reports/$id': typeof AuthenticatedAppReportsIdRoute
   '/_authenticated/app/settings/ai': typeof AuthenticatedAppSettingsAiRoute
   '/_authenticated/app/assessments/$id/pillars/$pillarId': typeof AuthenticatedAppAssessmentsIdPillarsPillarIdRoute
 }
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/assessments/$id'
     | '/app/assessments/new'
+    | '/app/reports/$id'
     | '/app/settings/ai'
     | '/app/assessments/$id/pillars/$pillarId'
   fileRoutesByTo: FileRoutesByTo
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/assessments/$id'
     | '/app/assessments/new'
+    | '/app/reports/$id'
     | '/app/settings/ai'
     | '/app/assessments/$id/pillars/$pillarId'
   id:
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/app/assessments/$id'
     | '/_authenticated/app/assessments/new'
+    | '/_authenticated/app/reports/$id'
     | '/_authenticated/app/settings/ai'
     | '/_authenticated/app/assessments/$id/pillars/$pillarId'
   fileRoutesById: FileRoutesById
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSettingsAiRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/reports/$id': {
+      id: '/_authenticated/app/reports/$id'
+      path: '/app/reports/$id'
+      fullPath: '/app/reports/$id'
+      preLoaderRoute: typeof AuthenticatedAppReportsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/assessments/new': {
       id: '/_authenticated/app/assessments/new'
       path: '/app/assessments/new'
@@ -268,6 +288,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAssessmentsIdRoute: typeof AuthenticatedAppAssessmentsIdRouteWithChildren
   AuthenticatedAppAssessmentsNewRoute: typeof AuthenticatedAppAssessmentsNewRoute
+  AuthenticatedAppReportsIdRoute: typeof AuthenticatedAppReportsIdRoute
   AuthenticatedAppSettingsAiRoute: typeof AuthenticatedAppSettingsAiRoute
 }
 
@@ -277,6 +298,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppAssessmentsIdRoute:
     AuthenticatedAppAssessmentsIdRouteWithChildren,
   AuthenticatedAppAssessmentsNewRoute: AuthenticatedAppAssessmentsNewRoute,
+  AuthenticatedAppReportsIdRoute: AuthenticatedAppReportsIdRoute,
   AuthenticatedAppSettingsAiRoute: AuthenticatedAppSettingsAiRoute,
 }
 
@@ -294,3 +316,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
