@@ -21,6 +21,7 @@ import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
+import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authenticated.app.reports.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
