@@ -40,7 +40,7 @@ function Dashboard() {
     enabled: !!orgId && !!assessments?.length,
     queryFn: async () => {
       const supabase = await getSupabaseBrowserClient();
-      const ids = assessments!.map((a) => a.id);
+      const ids = assessments!.map((a: any) => a.id);
       const [{ data: pa }, { data: p }] = await Promise.all([
         supabase.from("pillar_assessments").select("assessment_id, pillar_id, final_score, provisional_score, confidence, weight_override, status").in("assessment_id", ids),
         supabase.from("pillars").select("id, default_weight"),
@@ -74,7 +74,7 @@ function Dashboard() {
 
   const enriched = useMemo(() => {
     if (!assessments) return [];
-    return assessments.map((a) => {
+    return assessments.map((a: any) => {
       const rows = (pillars ?? []).filter((p: any) => p.assessment_id === a.id);
       const scoreRows = rows.map((r: any) => ({ score: r.final_score ?? r.provisional_score, weight: r.weight, weight_override: r.weight_override }));
       const overall = weightedOverall(scoreRows);
@@ -91,9 +91,9 @@ function Dashboard() {
     let list = enriched;
     if (filter) {
       const q = filter.toLowerCase();
-      list = list.filter((a) => `${a.name} ${a.business_area ?? ""} ${a.transformation_profile ?? ""}`.toLowerCase().includes(q));
+      list = list.filter((a: any) => `${a.name} ${a.business_area ?? ""} ${a.transformation_profile ?? ""}`.toLowerCase().includes(q));
     }
-    if (status !== "all") list = list.filter((a) => a.status === status);
+    if (status !== "all") list = list.filter((a: any) => a.status === status);
     list = [...list].sort((a: any, b: any) => {
       if (sort === "score") return (b.overall ?? -1) - (a.overall ?? -1);
       if (sort === "target") return new Date(a.target_completion_date ?? "9999").getTime() - new Date(b.target_completion_date ?? "9999").getTime();
@@ -104,10 +104,10 @@ function Dashboard() {
   }, [enriched, filter, status, sort]);
 
   const kpi = useMemo(() => {
-    const active = enriched.filter((a) => a.status === "active" || a.status === "in_review").length;
-    const inReview = enriched.filter((a) => a.status === "in_review").length;
-    const avg = enriched.length ? Math.round(enriched.reduce((s, a) => s + (a.overall ?? 0), 0) / enriched.length) : 0;
-    const lowConf = enriched.filter((a) => a.conf < 60).length;
+    const active = enriched.filter((a: any) => a.status === "active" || a.status === "in_review").length;
+    const inReview = enriched.filter((a: any) => a.status === "in_review").length;
+    const avg = enriched.length ? Math.round(enriched.reduce((s: number, a: any) => s + (a.overall ?? 0), 0) / enriched.length) : 0;
+    const lowConf = enriched.filter((a: any) => a.conf < 60).length;
     return { active, inReview, avg, lowConf };
   }, [enriched]);
 
