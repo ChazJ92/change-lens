@@ -21,13 +21,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
+      } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
         setState({ user: session?.user ?? null, loading: false });
         router.invalidate();
         qc.invalidateQueries();
       });
       cleanup = () => subscription.unsubscribe();
-      supabase.auth.getSession().then(({ data }) => {
+      supabase.auth.getSession().then(({ data }: { data: any }) => {
         if (mounted) setState({ user: data.session?.user ?? null, loading: false });
       });
     });

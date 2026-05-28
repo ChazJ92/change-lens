@@ -65,7 +65,7 @@ function NewAssessment() {
 
       const { data: pillars } = await supabase.from("pillars").select("id").order("display_order");
       if (pillars?.length) {
-        await supabase.from("pillar_assessments").insert(pillars.map((p) => ({ assessment_id: a.id, pillar_id: p.id, status: "not_started" as const })));
+        await supabase.from("pillar_assessments").insert(pillars.map((p: any) => ({ assessment_id: a.id, pillar_id: p.id, status: "not_started" as const })));
       }
       await supabase.from("audit_logs").insert({ organisation_id: orgId, assessment_id: a.id, actor_id: user!.id, actor_email: user!.email, event_type: "assessment_created", detail: { note: `Created assessment "${a.name}"` } });
       return a;
