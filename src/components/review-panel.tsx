@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,19 +46,17 @@ export function ReviewPanel({
 
   const approve = useMutation({
     mutationFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
       const finalScore = pa.final_score ?? pa.provisional_score;
       const upd: any = { status: "complete", reviewed_at: new Date().toISOString() };
       if (pa.final_score == null && finalScore != null) upd.final_score = finalScore;
-      const { error } = await supabase.from("pillar_assessments").update(upd).eq("id", pa.id);
-      if (error) throw error;
-      await supabase.from("review_comments").insert({
+      repo.pillarAssessments.update(pa.id, upd);
+      repo.reviewComments.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         decision: "approved",
         comment: comment.trim() || `Approved — pillar ${pillarName} signed off.`,
       });
-      await supabase.from("audit_logs").insert({
+      repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,
@@ -79,19 +77,14 @@ export function ReviewPanel({
   const requestChanges = useMutation({
     mutationFn: async () => {
       if (!comment.trim()) throw new Error("A note is required when requesting changes.");
-      const supabase = await getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("pillar_assessments")
-        .update({ status: "changes_requested" })
-        .eq("id", pa.id);
-      if (error) throw error;
-      await supabase.from("review_comments").insert({
+      repo.pillarAssessments.update(pa.id, { status: "changes_requested" });
+      repo.reviewComments.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         decision: "changes_requested",
         comment: comment.trim(),
       });
-      await supabase.from("audit_logs").insert({
+      repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,
@@ -114,22 +107,19 @@ export function ReviewPanel({
       const ns = Number(newScore);
       if (!Number.isFinite(ns) || ns < 1 || ns > 5) throw new Error("Score must be between 1 and 5.");
       if (!rationale.trim() || rationale.trim().length < 8) throw new Error("Rationale is required (min 8 chars).");
-      const supabase = await getSupabaseBrowserClient();
       const previous = pa.final_score ?? pa.provisional_score ?? null;
-      const { error: e1 } = await supabase.from("score_overrides").insert({
+      repo.scoreOverrides.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         previous_score: previous,
         new_score: ns,
         rationale: rationale.trim(),
       });
-      if (e1) throw e1;
-      const { error: e2 } = await supabase
-        .from("pillar_assessments")
-        .update({ final_score: ns, status: pa.status === "complete" ? "complete" : "ready_for_review" })
-        .eq("id", pa.id);
-      if (e2) throw e2;
-      await supabase.from("audit_logs").insert({
+      repo.pillarAssessments.update(pa.id, {
+        final_score: ns,
+        status: pa.status === "complete" ? "complete" : "ready_for_review",
+      });
+      repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,
