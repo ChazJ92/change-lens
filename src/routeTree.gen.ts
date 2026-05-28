@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SurveyTokenRouteImport } from './routes/survey.$token'
@@ -22,11 +21,6 @@ import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_au
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -89,7 +83,6 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
@@ -102,7 +95,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
@@ -117,7 +109,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
@@ -132,7 +123,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/survey/$token'
     | '/app/reviews'
     | '/api/ai/verify'
@@ -145,7 +135,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
     | '/survey/$token'
     | '/app/reviews'
     | '/api/ai/verify'
@@ -159,7 +148,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/login'
     | '/survey/$token'
     | '/_authenticated/app/reviews'
     | '/api/ai/verify'
@@ -174,20 +162,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
   SurveyTokenRoute: typeof SurveyTokenRoute
   ApiAiVerifyRoute: typeof ApiAiVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -309,7 +289,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
   SurveyTokenRoute: SurveyTokenRoute,
   ApiAiVerifyRoute: ApiAiVerifyRoute,
 }
