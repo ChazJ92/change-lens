@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/brand";
 import { useAiSettings, aiEnabled, PROVIDER_LABELS } from "@/lib/ai-config";
+import { resetMockData } from "@/lib/mock";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -80,6 +81,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   function pickOrg(id: string) {
     localStorage.setItem("core7.org", id);
+    window.location.reload();
+  }
+
+  function resetDemoData() {
+    resetMockData();
+    localStorage.removeItem("core7.org");
     window.location.reload();
   }
 
@@ -188,6 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled><Users className="h-4 w-4 mr-2" /> Team (coming)</DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={resetDemoData}><Plus className="h-4 w-4 mr-2" /> Reset demo data</DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}><LogOut className="h-4 w-4 mr-2" /> Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
