@@ -43,6 +43,12 @@ export interface DataRepositories {
   reviewComments: Repository<Row<"review_comments">, Insert<"review_comments">, Update<"review_comments">> & {
     listByPillarAssessment(pillarAssessmentId: string): Row<"review_comments">[];
   };
+  scoreOverrides: Repository<Row<"score_overrides">, Insert<"score_overrides">, Update<"score_overrides">> & {
+    listByPillarAssessment(pillarAssessmentId: string): Row<"score_overrides">[];
+  };
+  questions: Repository<Row<"questions">, Insert<"questions">, Update<"questions">> & {
+    listByPillar(pillarId: string): Row<"questions">[];
+  };
   activity: {
     listByOrg(orgId: string, limit?: number): Row<"audit_logs">[];
     listByAssessment(assessmentId: string, limit?: number): Row<"audit_logs">[];
@@ -170,6 +176,32 @@ export const mockRepositories: DataRepositories = {
         { id: uid(), created_at: now(), author_id: null, decision: null, ...input } as Row<"review_comments">,
       ])[0],
     update: (id, patch) => updateWhere("review_comments", (c) => c.id === id, patch)[0] ?? null,
+  },
+
+  scoreOverrides: {
+    list: () => getAll("score_overrides").sort(byCreatedDesc),
+    listByPillarAssessment: (pillarAssessmentId) =>
+      getAll("score_overrides")
+        .filter((o) => o.pillar_assessment_id === pillarAssessmentId)
+        .sort(byCreatedDesc),
+    get: (id) => getAll("score_overrides").find((o) => o.id === id) ?? null,
+    create: (input) =>
+      insertRows("score_overrides", [
+        { id: uid(), created_at: now(), author_id: null, previous_score: null, ...input } as Row<"score_overrides">,
+      ])[0],
+    update: (id, patch) => updateWhere("score_overrides", (o) => o.id === id, patch)[0] ?? null,
+  },
+
+  questions: {
+    list: () => getAll("questions").sort((a, b) => a.display_order - b.display_order),
+    listByPillar: (pillarId) =>
+      getAll("questions")
+        .filter((q) => q.pillar_id === pillarId)
+        .sort((a, b) => a.display_order - b.display_order),
+    get: (id) => getAll("questions").find((q) => q.id === id) ?? null,
+    create: (input) =>
+      insertRows("questions", [{ id: uid(), display_order: 0, ...input } as Row<"questions">])[0],
+    update: (id, patch) => updateWhere("questions", (q) => q.id === id, patch)[0] ?? null,
   },
 
   activity: {

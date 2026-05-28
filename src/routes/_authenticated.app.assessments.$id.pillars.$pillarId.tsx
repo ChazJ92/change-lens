@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
 import { ArrowLeft, Sparkles, FileText, Users, AlertTriangle, Lightbulb, MessageSquare, History } from "lucide-react";
@@ -23,37 +23,28 @@ function PillarDetail() {
   const { data, isLoading } = useQuery({
     queryKey: ["pillar", id, pillarId],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const [pillar, pa, questions, comments, overrides, risks, recs, assessment] = await Promise.all([
-        supabase.from("pillars").select("*").eq("id", pillarId).single(),
-        supabase.from("pillar_assessments").select("*").eq("assessment_id", id).eq("pillar_id", pillarId).single(),
-        supabase.from("questions").select("*").eq("pillar_id", pillarId).order("display_order"),
-        supabase.from("review_comments").select("*"),
-        supabase.from("score_overrides").select("*"),
-        supabase.from("risks").select("*").eq("assessment_id", id).eq("pillar_id", pillarId),
-        supabase.from("recommendations").select("*").eq("assessment_id", id).eq("pillar_id", pillarId),
-        supabase.from("assessments").select("organisation_id").eq("id", id).single(),
-      ]);
-      const paId = pa.data?.id;
+      const pa = repo.pillarAssessments
+        .listByAssessment(id)
+        .find((p) => p.pillar_id === pillarId) ?? null;
+      const paId = pa?.id;
+      const assessment = repo.assessments.get(id);
       return {
-        pillar: pillar.data,
-        pa: pa.data,
-        questions: questions.data ?? [],
-        comments: (comments.data ?? []).filter((c: any) => c.pillar_assessment_id === paId),
-        overrides: (overrides.data ?? []).filter((o: any) => o.pillar_assessment_id === paId),
-        risks: risks.data ?? [],
-        recs: recs.data ?? [],
-        organisationId: assessment.data?.organisation_id as string | undefined,
+        pillar: repo.pillars.get(pillarId),
+        pa,
+        questions: repo.questions.listByPillar(pillarId),
+        comments: paId ? repo.reviewComments.listByPillarAssessment(paId) : [],
+        overrides: paId ? repo.scoreOverrides.listByPillarAssessment(paId) : [],
+        risks: repo.risks.listByAssessment(id).filter((r) => r.pillar_id === pillarId),
+        recs: repo.recommendations.listByAssessment(id).filter((r) => r.pillar_id === pillarId),
+        organisationId: assessment?.organisation_id as string | undefined,
       };
     },
   });
 
   const transition = useMutation({
     mutationFn: async (status: any) => {
-      const supabase = await getSupabaseBrowserClient();
       if (!data?.pa?.id) return;
-      const { error } = await supabase.from("pillar_assessments").update({ status }).eq("id", data.pa.id);
-      if (error) throw error;
+      repo.pillarAssessments.update(data.pa.id, { status });
     },
     onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["pillar"] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),

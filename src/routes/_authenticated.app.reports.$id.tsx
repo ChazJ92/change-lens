@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,26 +24,15 @@ function ReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["report", id],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const [a, pa, p, risks, recs, ov, com, act] = await Promise.all([
-        supabase.from("assessments").select("*").eq("id", id).single(),
-        supabase.from("pillar_assessments").select("*").eq("assessment_id", id),
-        supabase.from("pillars").select("*").order("display_order"),
-        supabase.from("risks").select("*").eq("assessment_id", id),
-        supabase.from("recommendations").select("*").eq("assessment_id", id),
-        supabase.from("score_overrides").select("*"),
-        supabase.from("review_comments").select("*").order("created_at", { ascending: false }),
-        supabase.from("audit_logs").select("*").eq("assessment_id", id).order("created_at", { ascending: false }),
-      ]);
       return {
-        a: a.data,
-        pa: pa.data ?? [],
-        p: p.data ?? [],
-        risks: risks.data ?? [],
-        recs: recs.data ?? [],
-        ov: ov.data ?? [],
-        com: com.data ?? [],
-        act: act.data ?? [],
+        a: repo.assessments.get(id),
+        pa: repo.pillarAssessments.listByAssessment(id),
+        p: repo.pillars.list(),
+        risks: repo.risks.listByAssessment(id),
+        recs: repo.recommendations.listByAssessment(id),
+        ov: repo.scoreOverrides.list(),
+        com: repo.reviewComments.list(),
+        act: repo.activity.listByAssessment(id),
       };
     },
   });

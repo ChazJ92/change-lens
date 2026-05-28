@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { AiConfigBanner } from "@/components/ai-gate";
 import { useAiSettings, aiEnabled } from "@/lib/ai-config";
@@ -24,14 +24,9 @@ function Dashboard() {
     queryKey: ["assessments", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from("assessments")
-        .select("id, name, status, scope_level, complexity_level, transformation_profile, business_area, target_completion_date, created_at, updated_at, description")
-        .eq("organisation_id", orgId!)
-        .order("updated_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      return repo.assessments
+        .listByOrg(orgId!)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     },
   });
 
@@ -39,14 +34,10 @@ function Dashboard() {
     queryKey: ["pillars-all", orgId],
     enabled: !!orgId && !!assessments?.length,
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const ids = assessments!.map((a: any) => a.id);
-      const [{ data: pa }, { data: p }] = await Promise.all([
-        supabase.from("pillar_assessments").select("assessment_id, pillar_id, final_score, provisional_score, confidence, weight_override, status").in("assessment_id", ids),
-        supabase.from("pillars").select("id, default_weight"),
-      ]);
-      const wmap = new Map((p ?? []).map((x: any) => [x.id, Number(x.default_weight)]));
-      return (pa ?? []).map((row: any) => ({
+      const ids = new Set(assessments!.map((a: any) => a.id));
+      const pa = repo.pillarAssessments.list().filter((row) => ids.has(row.assessment_id));
+      const wmap = new Map(repo.pillars.list().map((x) => [x.id, Number(x.default_weight)]));
+      return pa.map((row: any) => ({
         ...row,
         weight: wmap.get(row.pillar_id) ?? 0,
       }));
@@ -57,14 +48,7 @@ function Dashboard() {
     queryKey: ["activity", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("audit_logs")
-        .select("id, event_type, detail, actor_email, created_at")
-        .eq("organisation_id", orgId!)
-        .order("created_at", { ascending: false })
-        .limit(8);
-      return data ?? [];
+      return repo.activity.listByOrg(orgId!, 8);
     },
   });
 

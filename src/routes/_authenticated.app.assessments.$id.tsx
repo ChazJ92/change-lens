@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2 } from "lucide-react";
@@ -16,17 +16,14 @@ function AssessmentOverview() {
   const { data, isLoading } = useQuery({
     queryKey: ["assessment", id],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const [a, pa, p, r, risks, recs, act] = await Promise.all([
-        supabase.from("assessments").select("*").eq("id", id).single(),
-        supabase.from("pillar_assessments").select("*").eq("assessment_id", id),
-        supabase.from("pillars").select("*").order("display_order"),
-        supabase.from("review_comments").select("*"),
-        supabase.from("risks").select("*").eq("assessment_id", id),
-        supabase.from("recommendations").select("*").eq("assessment_id", id),
-        supabase.from("audit_logs").select("*").eq("assessment_id", id).order("created_at", { ascending: false }).limit(10),
-      ]);
-      return { a: a.data, pa: pa.data ?? [], p: p.data ?? [], r: r.data ?? [], risks: risks.data ?? [], recs: recs.data ?? [], act: act.data ?? [] };
+      return {
+        a: repo.assessments.get(id),
+        pa: repo.pillarAssessments.listByAssessment(id),
+        p: repo.pillars.list(),
+        risks: repo.risks.listByAssessment(id),
+        recs: repo.recommendations.listByAssessment(id),
+        act: repo.activity.listByAssessment(id, 10),
+      };
     },
   });
 
