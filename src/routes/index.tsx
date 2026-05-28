@@ -31,7 +31,7 @@ function Index() {
           <div className="flex items-center gap-6">
             <span className="eyebrow hidden md:inline">Strategic assurance · CORE7 framework</span>
             <Button asChild size="sm" variant="outline" className="rounded-sm">
-              <Link to="/login">Sign in</Link>
+              <Link to="/app">Open workspace</Link>
             </Button>
           </div>
         </div>
@@ -55,10 +55,7 @@ function Index() {
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="rounded-sm h-11 px-5">
-                <Link to="/login">Enter workspace <ChevronRight className="h-4 w-4" /></Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-sm h-11 px-5">
-                <Link to="/login" search={{ mode: "signup" } as never}>Request access</Link>
+                <Link to="/app">Enter workspace <ChevronRight className="h-4 w-4" /></Link>
               </Button>
             </div>
             <div className="mt-10 flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
@@ -135,7 +132,7 @@ function Index() {
             </p>
           </div>
           <Button asChild className="rounded-sm">
-            <Link to="/login" search={{ mode: "signup" } as never}>Open the demo workspace <ChevronRight className="h-4 w-4" /></Link>
+            <Link to="/app">Open the demo workspace <ChevronRight className="h-4 w-4" /></Link>
           </Button>
         </section>
       </main>
