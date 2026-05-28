@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function signOut() {
     const supabase = await getSupabaseBrowserClient();
     await supabase.auth.signOut();
-    navigate({ to: "/login" });
+    navigate({ to: "/" });
   }
 
   function pickOrg(id: string) {
