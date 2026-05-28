@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { useCurrentOrg, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -45,29 +45,30 @@ function NewAssessment() {
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
-      const supabase = await getSupabaseBrowserClient();
-      const { data: a, error } = await supabase
-        .from("assessments")
-        .insert({
-          organisation_id: orgId,
-          name: form.name,
-          description: form.description || null,
-          transformation_profile: form.transformation_profile,
-          scope_level: form.scope_level,
-          complexity_level: form.complexity_level,
-          business_area: form.business_area,
-          target_completion_date: form.target_completion_date || null,
-          status: "active",
-          created_by: user!.id,
-        })
-        .select().single();
-      if (error) throw error;
+      const a = repo.assessments.create({
+        organisation_id: orgId,
+        name: form.name,
+        description: form.description || null,
+        transformation_profile: form.transformation_profile,
+        scope_level: form.scope_level,
+        complexity_level: form.complexity_level,
+        business_area: form.business_area,
+        target_completion_date: form.target_completion_date || null,
+        status: "active",
+        created_by: user!.id,
+      });
 
-      const { data: pillars } = await supabase.from("pillars").select("id").order("display_order");
-      if (pillars?.length) {
-        await supabase.from("pillar_assessments").insert(pillars.map((p: any) => ({ assessment_id: a.id, pillar_id: p.id, status: "not_started" as const })));
+      for (const p of repo.pillars.list()) {
+        repo.pillarAssessments.create({ assessment_id: a.id, pillar_id: p.id, status: "not_started" });
       }
-      await supabase.from("audit_logs").insert({ organisation_id: orgId, assessment_id: a.id, actor_id: user!.id, actor_email: user!.email, event_type: "assessment_created", detail: { note: `Created assessment "${a.name}"` } });
+      repo.activity.log({
+        organisation_id: orgId,
+        assessment_id: a.id,
+        actor_id: user!.id,
+        actor_email: user!.email,
+        event_type: "assessment_created",
+        detail: { note: `Created assessment "${a.name}"` },
+      });
       return a;
     },
     onSuccess: (a) => {
