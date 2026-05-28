@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { mockRepositories as repo } from "@/lib/mock";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
 import { ArrowRight, ShieldCheck, MessageSquareWarning, CheckCircle2, Filter } from "lucide-react";
@@ -22,22 +22,15 @@ function Reviews() {
     queryKey: ["reviews", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const [a, pa, p, c, o] = await Promise.all([
-        supabase.from("assessments").select("id,name,status,transformation_profile,business_area").eq("organisation_id", orgId!),
-        supabase.from("pillar_assessments").select("*"),
-        supabase.from("pillars").select("*").order("display_order"),
-        supabase.from("review_comments").select("*").order("created_at", { ascending: false }),
-        supabase.from("score_overrides").select("*").order("created_at", { ascending: false }),
-      ]);
-      const aIds = new Set((a.data ?? []).map((r: any) => r.id));
-      const rows = (pa.data ?? []).filter((row: any) => aIds.has(row.assessment_id));
+      const assessments = repo.assessments.listByOrg(orgId!);
+      const aIds = new Set(assessments.map((r) => r.id));
+      const rows = repo.pillarAssessments.list().filter((row) => aIds.has(row.assessment_id));
       return {
-        assessments: a.data ?? [],
+        assessments,
         pas: rows,
-        pillars: p.data ?? [],
-        comments: c.data ?? [],
-        overrides: o.data ?? [],
+        pillars: repo.pillars.list(),
+        comments: repo.reviewComments.list(),
+        overrides: repo.scoreOverrides.list(),
       };
     },
   });
