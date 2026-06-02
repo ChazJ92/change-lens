@@ -400,22 +400,37 @@ export type Database = {
       }
       organisations: {
         Row: {
+          change_population: number | null
+          countries_operated: number | null
           created_at: string
+          employee_count: number | null
           id: string
           is_demo: boolean
           name: string
+          sector: string | null
+          summary: string | null
         }
         Insert: {
+          change_population?: number | null
+          countries_operated?: number | null
           created_at?: string
+          employee_count?: number | null
           id?: string
           is_demo?: boolean
           name: string
+          sector?: string | null
+          summary?: string | null
         }
         Update: {
+          change_population?: number | null
+          countries_operated?: number | null
           created_at?: string
+          employee_count?: number | null
           id?: string
           is_demo?: boolean
           name?: string
+          sector?: string | null
+          summary?: string | null
         }
         Relationships: []
       }
@@ -1009,6 +1024,17 @@ export type Database = {
     }
     Functions: {
       assessment_org: { Args: { _assessment_id: string }; Returns: string }
+      create_organisation: {
+        Args: {
+          _change_population?: number
+          _countries_operated?: number
+          _employee_count?: number
+          _name: string
+          _sector?: string
+          _summary?: string
+        }
+        Returns: string
+      }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

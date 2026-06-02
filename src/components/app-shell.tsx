@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   ClipboardList,
+  Building2,
   Users,
   Settings,
   ChevronDown,
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app", label: "Assessments", icon: ClipboardList },
   { to: "/app/reviews", label: "Reviewer queue", icon: ShieldCheck },
+  { to: "/app/organisation", label: "Organisation", icon: Building2 },
 ];
 
 export function useCurrentOrg() {
@@ -123,6 +125,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {current?.id === o.id && <span className="text-[10px] font-mono uppercase text-primary">Current</span>}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/app/organisation"><Building2 className="h-4 w-4 mr-2" /> Manage organisations</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -192,6 +198,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/app/settings/ai"><Sparkles className="h-4 w-4 mr-2" /> AI settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/app/settings/ai"><Sparkles className="h-4 w-4 mr-2" /> AI settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/app/organisation"><Settings className="h-4 w-4 mr-2" /> Organisation settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled><Users className="h-4 w-4 mr-2" /> Team (coming)</DropdownMenuItem>
                 <DropdownMenuSeparator />

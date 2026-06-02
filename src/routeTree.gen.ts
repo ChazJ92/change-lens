@@ -15,6 +15,7 @@ import { Route as SurveyTokenRouteImport } from './routes/survey.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
 import { Route as AuthenticatedAppReviewsRouteImport } from './routes/_authenticated.app.reviews'
+import { Route as AuthenticatedAppOrganisationRouteImport } from './routes/_authenticated.app.organisation'
 import { Route as AuthenticatedAppSettingsAiRouteImport } from './routes/_authenticated.app.settings.ai'
 import { Route as AuthenticatedAppReportsIdRouteImport } from './routes/_authenticated.app.reports.$id'
 import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_authenticated.app.assessments.new'
@@ -50,6 +51,12 @@ const AuthenticatedAppReviewsRoute = AuthenticatedAppReviewsRouteImport.update({
   path: '/app/reviews',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppOrganisationRoute =
+  AuthenticatedAppOrganisationRouteImport.update({
+    id: '/app/organisation',
+    path: '/app/organisation',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAppSettingsAiRoute =
   AuthenticatedAppSettingsAiRouteImport.update({
     id: '/app/settings/ai',
@@ -84,6 +91,7 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/survey/$token': typeof SurveyTokenRoute
+  '/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -96,6 +104,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/survey/$token': typeof SurveyTokenRoute
+  '/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -110,6 +119,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/survey/$token': typeof SurveyTokenRoute
+  '/_authenticated/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
   '/api/ai/verify': typeof ApiAiVerifyRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/survey/$token'
+    | '/app/organisation'
     | '/app/reviews'
     | '/api/ai/verify'
     | '/app/'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/survey/$token'
+    | '/app/organisation'
     | '/app/reviews'
     | '/api/ai/verify'
     | '/app'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/survey/$token'
+    | '/_authenticated/app/organisation'
     | '/_authenticated/app/reviews'
     | '/api/ai/verify'
     | '/_authenticated/app/'
@@ -210,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReviewsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/organisation': {
+      id: '/_authenticated/app/organisation'
+      path: '/app/organisation'
+      fullPath: '/app/organisation'
+      preLoaderRoute: typeof AuthenticatedAppOrganisationRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/settings/ai': {
       id: '/_authenticated/app/settings/ai'
       path: '/app/settings/ai'
@@ -264,6 +284,7 @@ const AuthenticatedAppAssessmentsIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAppOrganisationRoute: typeof AuthenticatedAppOrganisationRoute
   AuthenticatedAppReviewsRoute: typeof AuthenticatedAppReviewsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAssessmentsIdRoute: typeof AuthenticatedAppAssessmentsIdRouteWithChildren
@@ -273,6 +294,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppOrganisationRoute: AuthenticatedAppOrganisationRoute,
   AuthenticatedAppReviewsRoute: AuthenticatedAppReviewsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppAssessmentsIdRoute:
@@ -295,3 +317,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
