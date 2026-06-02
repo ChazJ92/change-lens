@@ -27,6 +27,16 @@ export interface Repository<TRow, TInsert, TUpdate> {
 }
 
 export interface DataRepositories {
+  organisations: Repository<Row<"organisations">, Insert<"organisations">, Update<"organisations">> & {
+    listForUser(userId: string): (Row<"organisations"> & { role: string })[];
+    isAdmin(orgId: string, userId: string): boolean;
+    /**
+     * Atomically create an organisation, make the creator an admin and seed
+     * the default organisation settings. Mirrors the eventual server-side
+     * `create_organisation` transaction.
+     */
+    createWithMembership(input: Insert<"organisations">, userId: string): Row<"organisations">;
+  };
   assessments: Repository<Row<"assessments">, Insert<"assessments">, Update<"assessments">> & {
     listByOrg(orgId: string): Row<"assessments">[];
   };
@@ -61,6 +71,75 @@ function byCreatedDesc<T extends { created_at?: string | null }>(a: T, b: T) {
 }
 
 export const mockRepositories: DataRepositories = {
+  organisations: {
+    list: () => getAll("organisations"),
+    listForUser: (userId) => {
+      const memberships = getAll("memberships").filter((m) => m.user_id === userId);
+      const orgs = getAll("organisations");
+      return memberships
+        .map((m) => {
+          const org = orgs.find((o) => o.id === m.organisation_id);
+          return org ? { ...org, role: m.role as string } : null;
+        })
+        .filter(Boolean) as (Row<"organisations"> & { role: string })[];
+    },
+    isAdmin: (orgId, userId) =>
+      getAll("memberships").some(
+        (m) => m.organisation_id === orgId && m.user_id === userId && m.role === "admin",
+      ),
+    get: (id) => getAll("organisations").find((o) => o.id === id) ?? null,
+    create: (input) =>
+      insertRows("organisations", [
+        {
+          id: uid(),
+          created_at: now(),
+          is_demo: false,
+          sector: null,
+          employee_count: null,
+          change_population: null,
+          countries_operated: null,
+          summary: null,
+          ...input,
+        } as Row<"organisations">,
+      ])[0],
+    update: (id, patch) => updateWhere("organisations", (o) => o.id === id, patch)[0] ?? null,
+    createWithMembership: (input, userId) => {
+      const org = insertRows("organisations", [
+        {
+          id: uid(),
+          created_at: now(),
+          is_demo: false,
+          sector: null,
+          employee_count: null,
+          change_population: null,
+          countries_operated: null,
+          summary: null,
+          ...input,
+        } as Row<"organisations">,
+      ])[0];
+      insertRows("memberships", [
+        { id: uid(), organisation_id: org.id, user_id: userId, role: "admin", created_at: now() } as Row<"memberships">,
+      ]);
+      insertRows("user_roles", [
+        { id: uid(), organisation_id: org.id, user_id: userId, role: "org_admin" } as Row<"user_roles">,
+      ]);
+      insertRows("organisation_ai_settings", [
+        {
+          organisation_id: org.id,
+          is_active: false,
+          provider: "openai",
+          model: "gpt-4o-mini",
+          api_key_last4: null,
+          last_verified_at: null,
+          last_verified_status: null,
+          updated_at: now(),
+          updated_by: userId,
+        } as Row<"organisation_ai_settings">,
+      ]);
+      return org;
+    },
+  },
+
   assessments: {
     list: () => getAll("assessments"),
     listByOrg: (orgId) => getAll("assessments").filter((a) => a.organisation_id === orgId),
