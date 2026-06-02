@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { mockRepositories as repo } from "@/lib/mock";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/app/organisation")({
@@ -25,27 +25,16 @@ function OrganisationPage() {
     queryKey: ["organisation-profile", currentOrgId],
     enabled: !!currentOrgId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organisations")
-        .select("id, name, is_demo, sector, employee_count, change_population, countries_operated, summary")
-        .eq("id", currentOrgId!)
-        .single();
-      if (error) throw error;
-      return data;
+      const org = repo.organisations.get(currentOrgId!);
+      if (!org) throw new Error("Organisation not found");
+      return org;
     },
   });
 
   const { data: canManage } = useQuery({
     queryKey: ["organisation-admin", user?.id, currentOrgId],
     enabled: !!user?.id && !!currentOrgId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("is_org_admin", {
-        _org_id: currentOrgId!,
-        _user_id: user!.id,
-      });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () => repo.organisations.isAdmin(currentOrgId!, user!.id),
   });
 
   const [form, setForm] = useState({
@@ -81,6 +70,9 @@ function OrganisationPage() {
   const saveProfile = useMutation({
     mutationFn: async () => {
       if (!currentOrgId) throw new Error("No organisation selected");
+      if (!repo.organisations.isAdmin(currentOrgId, user!.id)) {
+        throw new Error("You need admin access to edit this organisation");
+      }
       const payload = {
         name: form.name.trim(),
         sector: emptyToNull(form.sector),
@@ -91,11 +83,7 @@ function OrganisationPage() {
       };
       if (!payload.name) throw new Error("Organisation name is required");
 
-      const { error } = await supabase
-        .from("organisations")
-        .update(payload)
-        .eq("id", currentOrgId);
-      if (error) throw error;
+      repo.organisations.update(currentOrgId, payload);
     },
     onSuccess: async () => {
       await Promise.all([
@@ -109,18 +97,20 @@ function OrganisationPage() {
 
   const createOrg = useMutation({
     mutationFn: async () => {
-      const payload = {
-        _name: newOrg.name.trim(),
-        _sector: emptyToNull(newOrg.sector),
-        _employee_count: toNullableInt(newOrg.employee_count),
-        _change_population: toNullableInt(newOrg.change_population),
-        _countries_operated: toNullableInt(newOrg.countries_operated),
-        _summary: emptyToNull(newOrg.summary),
-      };
-      if (!payload._name) throw new Error("Organisation name is required");
-      const { data, error } = await supabase.rpc("create_organisation", payload);
-      if (error) throw error;
-      return data;
+      const name = newOrg.name.trim();
+      if (!name) throw new Error("Organisation name is required");
+      const org = repo.organisations.createWithMembership(
+        {
+          name,
+          sector: emptyToNull(newOrg.sector),
+          employee_count: toNullableInt(newOrg.employee_count),
+          change_population: toNullableInt(newOrg.change_population),
+          countries_operated: toNullableInt(newOrg.countries_operated),
+          summary: emptyToNull(newOrg.summary),
+        },
+        user!.id,
+      );
+      return org.id;
     },
     onSuccess: async (orgId) => {
       localStorage.setItem("core7.org", orgId);
