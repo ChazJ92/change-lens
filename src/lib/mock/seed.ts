@@ -54,8 +54,30 @@ export function buildSeed(): MockDb {
   const orgMeridian = uid();
   const orgDemo = uid();
   db.organisations = [
-    { id: orgMeridian, name: "Meridian Capital", is_demo: false, created_at: iso(days(200)) },
-    { id: orgDemo, name: "CORE7 Demo Workspace", is_demo: true, created_at: iso(days(40)) },
+    {
+      id: orgMeridian,
+      name: "Meridian Capital",
+      is_demo: false,
+      sector: "Financial services",
+      employee_count: 8400,
+      change_population: 2600,
+      countries_operated: 14,
+      summary:
+        "Mid-flight enterprise transformation across finance, customer and technology. Heavily regulated, multi-region operating model with strong governance but uneven delivery capacity.",
+      created_at: iso(days(200)),
+    },
+    {
+      id: orgDemo,
+      name: "CORE7 Demo Workspace",
+      is_demo: true,
+      sector: "Cross-industry (demo)",
+      employee_count: 1200,
+      change_population: 400,
+      countries_operated: 3,
+      summary:
+        "Sample workspace for exploring CORE7 across a representative digital transformation.",
+      created_at: iso(days(40)),
+    },
   ];
 
   // --- Profile + memberships ----------------------------------------------
