@@ -385,7 +385,7 @@ function NewAssessment() {
             {/* Stage ribbon */}
             <ol className="flex items-stretch gap-3">
               {STAGES.map((s, i) => {
-                const activeIndex = stage === "context" ? 0 : 1;
+                const activeIndex = stage === "context" ? 0 : stage === "survey" ? 1 : 2;
                 const active = i === activeIndex;
                 const done = i < activeIndex;
                 return (
