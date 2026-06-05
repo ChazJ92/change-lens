@@ -256,6 +256,7 @@ const ROLES = [
 /* ---------------------------------------------------------------- */
 
 function MethodologyPage() {
+  const [activePillar, setActivePillar] = useState<number | null>(null);
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
