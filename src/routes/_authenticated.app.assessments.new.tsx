@@ -270,6 +270,12 @@ function NewAssessment() {
   );
   const surveyProgress = Math.round((answeredCount / totalQuestions) * 100);
 
+  // Answer-driven CORE7 profile — updates live as questions are answered.
+  const profile = useMemo(() => computeProfile(answers), [answers]);
+  const profileComplete = answeredCount === totalQuestions;
+  const overallConfidence = confidenceLabel(surveyProgress, profileComplete);
+  const maxWeight = Math.max(1, ...profile.sorted.map((p) => p.weight));
+
   const lensAnswered = (l: SurveyLens) => l.questions.filter((q) => answers[q.id]).length;
   const lensComplete = (l: SurveyLens) => lensAnswered(l) === l.questions.length;
   const pageComplete = pageQuestions.every((q) => answers[q.id]);
