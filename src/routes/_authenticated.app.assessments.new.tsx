@@ -226,7 +226,7 @@ function NewAssessment() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [stage, setStage] = useState<"context" | "survey">("context");
+  const [stage, setStage] = useState<"context" | "survey" | "review">("context");
   const [lensIndex, setLensIndex] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
