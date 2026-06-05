@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SurveyTokenRouteImport } from './routes/survey.$token'
@@ -22,6 +23,11 @@ import { Route as AuthenticatedAppAssessmentsNewRouteImport } from './routes/_au
 import { Route as AuthenticatedAppAssessmentsIdRouteImport } from './routes/_authenticated.app.assessments.$id'
 import { Route as AuthenticatedAppAssessmentsIdPillarsPillarIdRouteImport } from './routes/_authenticated.app.assessments.$id.pillars.$pillarId'
 
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -90,6 +96,7 @@ const AuthenticatedAppAssessmentsIdPillarsPillarIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/methodology': typeof MethodologyRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/methodology': typeof MethodologyRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/methodology': typeof MethodologyRoute
   '/survey/$token': typeof SurveyTokenRoute
   '/_authenticated/app/organisation': typeof AuthenticatedAppOrganisationRoute
   '/_authenticated/app/reviews': typeof AuthenticatedAppReviewsRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/methodology'
     | '/survey/$token'
     | '/app/organisation'
     | '/app/reviews'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/methodology'
     | '/survey/$token'
     | '/app/organisation'
     | '/app/reviews'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/methodology'
     | '/survey/$token'
     | '/_authenticated/app/organisation'
     | '/_authenticated/app/reviews'
@@ -175,12 +187,20 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  MethodologyRoute: typeof MethodologyRoute
   SurveyTokenRoute: typeof SurveyTokenRoute
   ApiAiVerifyRoute: typeof ApiAiVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -311,6 +331,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  MethodologyRoute: MethodologyRoute,
   SurveyTokenRoute: SurveyTokenRoute,
   ApiAiVerifyRoute: ApiAiVerifyRoute,
 }
