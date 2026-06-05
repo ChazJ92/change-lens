@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
 });
 
 // Parse the compact profile summary persisted by the profiling flow, e.g.
-// "Technology & Data (38%)" → { lead, weight }. Falls back gracefully.
+// "Technology & Tooling (38%)" → { lead, weight }. Falls back gracefully.
 function parseProfile(s?: string | null) {
   if (!s) return { lead: null as string | null, weight: null as number | null };
   const m = s.match(/^(.*?)\s*\((\d+)%\)\s*$/);
