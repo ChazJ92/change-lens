@@ -229,7 +229,7 @@ function AssessmentOverview() {
               return (
                 <div key={`${row.id}-${i}`} className="py-2 border-b border-border last:border-0 text-sm flex items-start justify-between gap-3">
                   <span className="leading-snug">{m}</span>
-                  <span className="eyebrow whitespace-nowrap">{pillar?.code?.replace(/_/g, " ")}</span>
+                  <span className="eyebrow whitespace-nowrap">{pillarLabel(pillar?.code, pillar?.name)}</span>
                 </div>
               );
             }))}
