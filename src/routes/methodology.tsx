@@ -376,7 +376,7 @@ function MethodologyPage() {
                         className="h-9 w-9 rounded-sm flex items-center justify-center"
                         style={{ background: "color-mix(in oklab, var(--primary) 10%, transparent)" }}
                       >
-                        <stage.icon className="h-4.5 w-4.5" style={{ color: "var(--primary)" }} />
+                        <stage.icon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                       </div>
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {String(i + 1).padStart(2, "0")}
@@ -680,7 +680,7 @@ function MethodologyPage() {
               {OUTPUTS.map((o, i) => (
                 <Reveal key={o.title} delay={(i % 3) * 60} className="h-full">
                   <div className="h-full bg-card p-5 flex items-start gap-3">
-                    <o.icon className="h-4.5 w-4.5 mt-0.5 shrink-0" style={{ color: "var(--primary)" }} />
+                    <o.icon className="h-5 w-5 mt-0.5 shrink-0" style={{ color: "var(--primary)" }} />
                     <span className="text-[14px] font-medium" style={{ color: "var(--ink)" }}>
                       {o.title}
                     </span>
