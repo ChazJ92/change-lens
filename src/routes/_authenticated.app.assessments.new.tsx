@@ -323,6 +323,11 @@ function NewAssessment() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function goToReview() {
+    setStage("review");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
