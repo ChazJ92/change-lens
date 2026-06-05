@@ -19,13 +19,13 @@ export const Route = createFileRoute("/_authenticated/app/assessments/new")({
 
 // CORE7 pillars — used to render the emerging weighting profile in the rail.
 const PILLARS = [
-  { code: "STR", name: "Strategy & Vision", base: 18, kw: ["strategy", "vision", "ambition", "roadmap", "growth", "market", "competitive"] },
-  { code: "GOV", name: "Leadership & Governance", base: 16, kw: ["governance", "sponsor", "leadership", "board", "decision", "funding", "budget"] },
-  { code: "OPM", name: "Operating Model & Process", base: 14, kw: ["process", "operating model", "operations", "efficiency", "cutover", "workflow", "supply"] },
-  { code: "PPL", name: "People & Culture", base: 14, kw: ["people", "culture", "team", "skills", "capability", "adoption", "training", "workforce"] },
-  { code: "TEC", name: "Technology & Data", base: 16, kw: ["technology", "data", "platform", "system", "erp", "cloud", "integration", "digital", "ai", "software"] },
-  { code: "CUS", name: "Customer & Value", base: 12, kw: ["customer", "value", "experience", "service", "revenue", "outcome", "benefit"] },
-  { code: "RSK", name: "Risk & Compliance", base: 10, kw: ["risk", "compliance", "regulatory", "security", "control", "resilience", "audit"] },
+  { code: "SAL", name: "Strategic Alignment & Leadership", base: 20, kw: ["strategy", "vision", "ambition", "roadmap", "leadership", "sponsor", "board", "decision", "alignment"] },
+  { code: "DQI", name: "Data Quality & Insight", base: 7, kw: ["data", "insight", "analytics", "reporting", "measurement", "metrics", "evidence", "quality"] },
+  { code: "PRM", name: "Process Maturity", base: 12, kw: ["process", "operating model", "operations", "efficiency", "workflow", "standardisation", "cutover"] },
+  { code: "TAT", name: "Technology & Tooling", base: 15, kw: ["technology", "platform", "system", "erp", "cloud", "integration", "digital", "ai", "software", "tooling"] },
+  { code: "PAC", name: "People & Capability", base: 18, kw: ["people", "team", "skills", "capability", "training", "workforce", "talent", "capacity"] },
+  { code: "GAR", name: "Governance & Risk", base: 10, kw: ["governance", "risk", "compliance", "regulatory", "security", "control", "assurance", "audit", "funding"] },
+  { code: "OAD", name: "Organisational Adaptability", base: 18, kw: ["culture", "adoption", "behaviour", "mindset", "change appetite", "communications", "resilience", "sustain"] },
 ];
 
 const STAGES = [
