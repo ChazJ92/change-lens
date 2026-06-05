@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -10,17 +11,21 @@ export function LensMark({
   className,
   size = 28,
   tone = "primary",
+  interactive = false,
 }: {
   className?: string;
   size?: number;
   tone?: "primary" | "ink" | "inverse";
+  interactive?: boolean;
 }) {
+  const [active, setActive] = useState<number | null>(null);
   const color =
     tone === "inverse"
       ? "var(--card)"
       : tone === "ink"
         ? "var(--ink)"
         : "var(--ink)";
+  const accent = tone === "inverse" ? "var(--card)" : "var(--primary)";
 
   // Segmented ring: 7 arc segments around the centre, with thin gaps.
   const cx = 32;
@@ -55,10 +60,29 @@ export function LensMark({
       viewBox="0 0 64 64"
       fill="none"
       aria-hidden="true"
+      onMouseLeave={interactive ? () => setActive(null) : undefined}
     >
-      {Array.from({ length: segments }).map((_, i) => (
-        <path key={i} d={arc(i)} fill={color} />
-      ))}
+      {Array.from({ length: segments }).map((_, i) => {
+        const isActive = active === i;
+        const dimmed = active !== null && !isActive;
+        return (
+          <path
+            key={i}
+            d={arc(i)}
+            fill={isActive ? accent : color}
+            style={{
+              transformBox: "fill-box",
+              transformOrigin: "center",
+              transition: "fill 0.2s ease, opacity 0.2s ease, transform 0.2s ease",
+              opacity: dimmed ? 0.35 : 1,
+              transform: isActive ? "scale(1.08)" : "scale(1)",
+              cursor: interactive ? "pointer" : undefined,
+              pointerEvents: interactive ? "auto" : "none",
+            }}
+            onMouseEnter={interactive ? () => setActive(i) : undefined}
+          />
+        );
+      })}
     </svg>
   );
 }
