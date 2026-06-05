@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 /**
@@ -100,15 +101,16 @@ export function Wordmark({
         ChangeLens
       </div>
       {withFramework && (
-        <div
+        <Link
+          to="/methodology"
           className={cn(
             sizes.sub,
-            "col-start-2 font-mono uppercase tracking-[0.22em] font-medium",
+            "col-start-2 font-mono uppercase tracking-[0.22em] font-medium hover:opacity-80 transition-opacity",
           )}
           style={{ color: subColor }}
         >
           Powered by the <span style={{ color: accent }}>CORE7</span> framework
-        </div>
+        </Link>
       )}
     </div>
   );
