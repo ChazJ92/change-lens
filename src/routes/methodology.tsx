@@ -785,9 +785,12 @@ function MethodologyPage() {
           <Link to="/">
             <Wordmark size="sm" />
           </Link>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Link
+            to="/methodology"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+          >
             © ChangeLens · Powered by the CORE7 framework
-          </p>
+          </Link>
         </div>
       </footer>
     </div>

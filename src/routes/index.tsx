@@ -143,9 +143,12 @@ function Index() {
       <footer className="border-t border-border bg-card mt-8">
         <div className="mx-auto max-w-[1200px] px-8 py-8 flex flex-wrap items-center justify-between gap-4">
           <Wordmark size="sm" />
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Link
+            to="/methodology"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+          >
             © ChangeLens · Powered by the CORE7 framework
-          </p>
+          </Link>
         </div>
       </footer>
     </div>
