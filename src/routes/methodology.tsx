@@ -310,7 +310,7 @@ function MethodologyPage() {
                   <span className="font-mono text-[10px] text-muted-foreground">v1.0</span>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <LensMark size={240} />
+                  <LensMark size={240} interactive />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 border-t border-border grid grid-cols-7 text-center">
                   {["Strategy", "Data", "Process", "Tech", "People", "Govern.", "Adapt."].map((d) => (
