@@ -13,6 +13,7 @@ import {
   confidenceFromLabel,
 } from "@/lib/scoring";
 import { Printer, ArrowLeft, ShieldCheck, AlertTriangle, Lightbulb, Sparkles, FileWarning } from "lucide-react";
+import { pillarAbbr } from "@/lib/pillars";
 
 export const Route = createFileRoute("/_authenticated/app/reports/$id")({
   component: ReportPage,
@@ -150,7 +151,7 @@ function ReportPage() {
                     <tr key={pillar.id}>
                       <td className="px-4 py-2.5">
                         <div className="font-medium">{pillar.name}</div>
-                        <div className="eyebrow">{pillar.code?.replace(/_/g, " ")}</div>
+                        <div className="eyebrow">{pillarAbbr(pillar.code)}</div>
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono">{weight}%</td>
                       <td className="px-4 py-2.5 text-right font-mono">
