@@ -182,7 +182,7 @@ function computeProfile(answers: Record<string, string>) {
     const idx = ans ? opts.indexOf(ans) : -1;
     const answered = idx >= 0;
     const score = answered && opts.length > 1 ? Math.round((idx / (opts.length - 1)) * 100) : 0;
-    const topPillar = Object.entries(d.w).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? "STR";
+    const topPillar = Object.entries(d.w).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? "SAL";
     return { ...d, answered, score, topPillar };
   });
 
