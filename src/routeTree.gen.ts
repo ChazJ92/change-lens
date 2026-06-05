@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as SurveyTokenRouteImport } from './routes/survey.$token'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as ApiAiVerifyRouteImport } from './routes/api/ai.verify'
@@ -36,11 +35,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MethodologyRoute = MethodologyRouteImport.update({
-  id: '/methodology',
-  path: '/methodology',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SurveyTokenRoute = SurveyTokenRouteImport.update({
