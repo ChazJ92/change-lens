@@ -851,6 +851,25 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
+function SectionTitle({
+  icon: Icon,
+  label,
+  sub,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  sub?: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 text-primary" /> {label}
+      </div>
+      {sub && <p className="mt-1 text-[12px] text-muted-foreground">{sub}</p>}
+    </div>
+  );
+}
+
 function OptionCards({
   options,
   value,
