@@ -253,10 +253,10 @@ export function buildSeed(): MockDb {
   // --- Audit logs (activity) ----------------------------------------------
   db.audit_logs = [
     { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "ERP & Operating Model Modernisation"' }, created_at: iso(days(35)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategy & Vision for review" }, created_at: iso(days(5)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Operating Model & Process" }, created_at: iso(days(2)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategy & Vision: 3.4 → 3.6" }, created_at: iso(days(3)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategy & Vision" }, created_at: iso(days(4)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategic Alignment & Leadership for review" }, created_at: iso(days(5)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Process Maturity" }, created_at: iso(days(2)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategic Alignment & Leadership: 3.4 → 3.6" }, created_at: iso(days(3)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategic Alignment & Leadership" }, created_at: iso(days(4)) },
     { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_status_changed", detail: { note: "Moved to In review" }, created_at: iso(days(2)) },
     { id: uid(), organisation_id: orgMeridian, assessment_id: a3, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Cloud Migration Programme"' }, created_at: iso(days(8)) },
     { id: uid(), organisation_id: orgDemo, assessment_id: a4, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Demo: Enterprise Digital Readiness"' }, created_at: iso(days(20)) },
@@ -265,7 +265,7 @@ export function buildSeed(): MockDb {
   // --- Surveys + recipients (stakeholder input) ---------------------------
   const survey1 = uid();
   db.surveys = [
-    { id: survey1, assessment_id: a1, pillar_id: pillarByOrder(4), title: "People & Culture readiness pulse", description: "Short pulse for the operating-model working group.", created_at: iso(days(6)) },
+    { id: survey1, assessment_id: a1, pillar_id: pillarByOrder(4), title: "Technology & Tooling readiness pulse", description: "Short pulse for the operating-model working group.", created_at: iso(days(6)) },
   ];
   db.survey_recipients = [
     { id: uid(), survey_id: survey1, email: "lead.eng@meridiancapital.com", name: "J. Okafor", stakeholder_group: "Engineering", token: uid(), submitted_at: iso(days(4)), created_at: iso(days(6)) },
