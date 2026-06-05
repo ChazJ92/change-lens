@@ -103,6 +103,59 @@ function AssessmentOverview() {
 
       <div className="px-8 py-6 max-w-[1400px] grid lg:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-8 min-w-0">
+          <section className="border border-border rounded-sm bg-card p-5">
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="font-semibold tracking-tight text-sm" style={{ color: "var(--navy)" }}>Transformation profile</h2>
+              </div>
+              <StatusChip
+                label={`Profile maturity · ${complexityLabel}`}
+                tone={complexityLabel === "High" ? "warning" : complexityLabel === "Low" ? "muted" : "info"}
+              />
+            </div>
+
+            <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-5">
+              <div className="space-y-3">
+                <div>
+                  <div className="eyebrow">Lead lens</div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-medium" style={{ color: "var(--navy)" }}>{profile.lead ?? "—"}</span>
+                    {profile.weight != null && (
+                      <span className="font-mono text-xs text-muted-foreground">{profile.weight}%</span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><div className="eyebrow">Scope</div><div className="text-sm font-medium mt-1">{a.scope_level ?? "—"}</div></div>
+                  <div><div className="eyebrow">Intensity</div><div className="text-sm font-medium mt-1">{complexityLabel}</div></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> Top weighted CORE7 pillars</div>
+                <ul className="mt-2 space-y-2">
+                  {topPillars.map((pillar: any) => (
+                    <li key={pillar.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[12px] truncate">{pillar.name}</div>
+                        <div className="mt-1 h-1.5 bg-secondary rounded-sm overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${(Number(pillar.default_weight ?? 0) / maxPillarWeight) * 100}%` }} />
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-muted-foreground">{pillar.default_weight}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <p className="mt-4 pt-3 border-t border-border text-[11px] text-muted-foreground leading-snug">
+              This dynamic weighting profile tailors the later readiness assessment by directing analytical
+              weight toward the most implicated lenses. It is not itself a readiness result.
+            </p>
+          </section>
+
           <section>
             <h2 className="font-semibold tracking-tight mb-3" style={{ color: "var(--navy)" }}>CORE7 pillars</h2>
             <div className="grid sm:grid-cols-2 gap-3">
