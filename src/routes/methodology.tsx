@@ -180,6 +180,17 @@ const PILLAR_SHORT = [
   "Organisational Adaptability",
 ];
 
+/* Short, hover-friendly explanations keyed to each lens segment / pillar. */
+const PILLAR_HINTS = [
+  "Clear strategic alignment, leadership ownership and decision-making support.",
+  "The data, insight, quality and visibility needed to support the change.",
+  "Key processes understood, documented, owned and mature enough to transform.",
+  "Systems, integrations, architecture and tooling ready for the change.",
+  "The skills, capacity, roles and behaviours to deliver and adopt the change.",
+  "Decision rights, controls, accountability and assurance that are clear and effective.",
+  "Cultural resilience and change capacity to adopt and sustain the change.",
+];
+
 const FLOW = [
   { icon: Target, title: "Change Definition", body: "Capture the scope, intent and outcomes of the transformation in clear terms." },
   { icon: GitBranch, title: "Transformation Profiling", body: "Characterise the change to determine which readiness conditions matter most." },
