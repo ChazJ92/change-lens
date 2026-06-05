@@ -364,7 +364,7 @@ function NewAssessment() {
     },
     onSuccess: (a) => {
       qc.invalidateQueries({ queryKey: ["assessments"] });
-      toast.success("Transformation profile created. Profiling survey ready next.");
+      toast.success("Transformation profile created. Readiness workspace ready.");
       navigate({ to: "/app/assessments/$id", params: { id: a.id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
