@@ -71,8 +71,8 @@ export function LensMark({
             d={arc(i)}
             fill={isActive ? accent : color}
             style={{
-              transformBox: "fill-box",
-              transformOrigin: "center",
+              transformBox: "view-box",
+              transformOrigin: "32px 32px",
               transition: "fill 0.2s ease, opacity 0.2s ease, transform 0.2s ease",
               opacity: dimmed ? 0.35 : 1,
               transform: isActive ? "scale(1.08)" : "scale(1)",
