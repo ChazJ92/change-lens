@@ -783,44 +783,78 @@ function NewAssessment() {
                   <div>
                     <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>Emerging CORE7 profile</div>
                     <div className="text-[11px] text-muted-foreground">
-                      {stage === "survey" ? "Refines as you profile" : "Live weighting preview"}
+                      {stage === "context" ? "Live weighting preview" : stage === "survey" ? "Refines as you profile" : "Generated weighting"}
                     </div>
                   </div>
                 </div>
-                <ul className="space-y-2">
-                  {emerging.map((p) => (
-                    <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                      <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
-                      <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <span
-                          className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
-                          style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
-                        />
-                      </span>
-                      <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                    </li>
-                  ))}
-                </ul>
+                {stage === "context" ? (
+                  <ul className="space-y-2">
+                    {emerging.map((p) => (
+                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                          <span
+                            className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
+                            style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
+                          />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-2">
+                    {profile.sorted.map((p) => (
+                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                          <span
+                            className="block h-full bg-primary transition-all duration-500"
+                            style={{ width: `${(p.weight / maxWeight) * 100}%` }}
+                          />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {stage === "survey" && (
                   <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
-                    Placeholder preview — final weighting is computed from your survey responses when the profile is generated.
+                    Provisional — confidence {overallConfidence.label.replace("Provisional · ", "").toLowerCase()} until all 23 signals are profiled.
                   </p>
                 )}
               </div>
 
-              {/* Top detected signals */}
+              {/* Active signals */}
               <div className="px-5 py-4">
-                <div className="text-[11px] text-muted-foreground mb-2">Top detected signals</div>
-                {signals.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground mb-2">
+                  {stage === "context" ? "Top detected signals" : "Top active drivers"}
+                </div>
+                {stage === "context" ? (
+                  signals.length === 0 ? (
+                    <p className="text-[12px] text-muted-foreground/80 italic">
+                      Start describing the change to surface signals across the seven pillars.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {signals.map((s) => (
+                        <span key={s.code} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                ) : profile.topDrivers.length === 0 ? (
                   <p className="text-[12px] text-muted-foreground/80 italic">
-                    Start describing the change to surface signals across the seven pillars.
+                    Answer questions to surface the strongest characteristic drivers.
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
-                    {signals.map((s) => (
-                      <span key={s.code} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
+                    {profile.topDrivers.slice(0, 4).map((d) => (
+                      <span key={d.q} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        {s.name}
+                        {d.name}
                       </span>
                     ))}
                   </div>
