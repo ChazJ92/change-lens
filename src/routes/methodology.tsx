@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Wordmark, LensMark } from "@/components/brand";
+import { cn } from "@/lib/utils";
 import {
   ChevronRight,
   Compass,
@@ -180,6 +181,17 @@ const PILLAR_SHORT = [
   "Organisational Adaptability",
 ];
 
+/* Short, hover-friendly explanations keyed to each lens segment / pillar. */
+const PILLAR_HINTS = [
+  "Clear strategic alignment, leadership ownership and decision-making support.",
+  "The data, insight, quality and visibility needed to support the change.",
+  "Key processes understood, documented, owned and mature enough to transform.",
+  "Systems, integrations, architecture and tooling ready for the change.",
+  "The skills, capacity, roles and behaviours to deliver and adopt the change.",
+  "Decision rights, controls, accountability and assurance that are clear and effective.",
+  "Cultural resilience and change capacity to adopt and sustain the change.",
+];
+
 const FLOW = [
   { icon: Target, title: "Change Definition", body: "Capture the scope, intent and outcomes of the transformation in clear terms." },
   { icon: GitBranch, title: "Transformation Profiling", body: "Characterise the change to determine which readiness conditions matter most." },
@@ -245,6 +257,7 @@ const ROLES = [
 /* ---------------------------------------------------------------- */
 
 function MethodologyPage() {
+  const [activePillar, setActivePillar] = useState<number | null>(null);
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -310,16 +323,49 @@ function MethodologyPage() {
                   <span className="font-mono text-[10px] text-muted-foreground">v1.0</span>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <LensMark size={240} interactive />
+                  <LensMark
+                    size={220}
+                    activeSegment={activePillar}
+                    onSegmentChange={setActivePillar}
+                  />
+                </div>
+                {/* Hover explanation */}
+                <div
+                  className="absolute left-6 right-6 bottom-[68px] rounded-sm border border-border bg-background/95 backdrop-blur px-4 py-3 transition-all duration-200"
+                  style={{
+                    opacity: activePillar === null ? 0 : 1,
+                    transform: activePillar === null ? "translateY(6px)" : "translateY(0)",
+                  }}
+                  aria-hidden={activePillar === null}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-primary">
+                      {activePillar === null ? "00" : PILLARS[activePillar].n}
+                    </span>
+                    <span className="text-[13px] font-semibold tracking-tight" style={{ color: "var(--ink)" }}>
+                      {activePillar === null ? "" : PILLARS[activePillar].name}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                    {activePillar === null ? "" : PILLAR_HINTS[activePillar]}
+                  </p>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 border-t border-border grid grid-cols-7 text-center">
-                  {["Strategy", "Data", "Process", "Tech", "People", "Govern.", "Adapt."].map((d) => (
-                    <div
+                  {["Strategy", "Data", "Process", "Tech", "People", "Govern.", "Adapt."].map((d, i) => (
+                    <button
                       key={d}
-                      className="px-1 py-2.5 border-r border-border last:border-r-0 text-[8px] font-mono uppercase tracking-wider text-muted-foreground"
+                      type="button"
+                      onMouseEnter={() => setActivePillar(i)}
+                      onMouseLeave={() => setActivePillar(null)}
+                      className={cn(
+                        "px-1 py-2.5 border-r border-border last:border-r-0 text-[8px] font-mono uppercase tracking-wider transition-colors",
+                        activePillar === i
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
                     >
                       {d}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

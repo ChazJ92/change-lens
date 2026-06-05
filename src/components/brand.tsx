@@ -12,13 +12,24 @@ export function LensMark({
   size = 28,
   tone = "primary",
   interactive = false,
+  activeSegment,
+  onSegmentChange,
 }: {
   className?: string;
   size?: number;
   tone?: "primary" | "ink" | "inverse";
   interactive?: boolean;
+  activeSegment?: number | null;
+  onSegmentChange?: (index: number | null) => void;
 }) {
-  const [active, setActive] = useState<number | null>(null);
+  const [internalActive, setInternalActive] = useState<number | null>(null);
+  const controlled = activeSegment !== undefined;
+  const active = controlled ? activeSegment! : internalActive;
+  const setActive = (i: number | null) => {
+    if (!controlled) setInternalActive(i);
+    onSegmentChange?.(i);
+  };
+  const live = interactive || controlled;
   const color =
     tone === "inverse"
       ? "var(--card)"
@@ -60,7 +71,7 @@ export function LensMark({
       viewBox="0 0 64 64"
       fill="none"
       aria-hidden="true"
-      onMouseLeave={interactive ? () => setActive(null) : undefined}
+      onMouseLeave={live ? () => setActive(null) : undefined}
     >
       {Array.from({ length: segments }).map((_, i) => {
         const isActive = active === i;
@@ -76,10 +87,10 @@ export function LensMark({
               transition: "fill 0.2s ease, opacity 0.2s ease, transform 0.2s ease",
               opacity: dimmed ? 0.35 : 1,
               transform: isActive ? "scale(1.08)" : "scale(1)",
-              cursor: interactive ? "pointer" : undefined,
-              pointerEvents: interactive ? "auto" : "none",
+              cursor: live ? "pointer" : undefined,
+              pointerEvents: live ? "auto" : "none",
             }}
-            onMouseEnter={interactive ? () => setActive(i) : undefined}
+            onMouseEnter={live ? () => setActive(i) : undefined}
           />
         );
       })}
