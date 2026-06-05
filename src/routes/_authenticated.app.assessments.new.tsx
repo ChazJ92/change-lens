@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { useCurrentOrg, PageHeader } from "@/components/app-shell";
@@ -8,19 +8,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LensMark } from "@/components/brand";
 import { toast } from "sonner";
-import { Check, ChevronRight } from "lucide-react";
+import { ArrowRight, Sparkles, Radar, Save, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
 });
 
-const PROFILES = ["Digital", "ERP", "Operating model", "M&A integration", "Regulatory", "Cost optimisation", "Customer experience", "Cloud migration"];
-const SCOPES = ["Team", "Function", "Business unit", "Enterprise", "Cross-enterprise"];
-const COMPLEXITY = ["Low", "Medium", "High", "Very high"];
-const BUSINESS_AREAS = ["Operations", "Finance", "Technology", "People & HR", "Customer", "Supply chain", "Risk & Compliance", "Strategy"];
+// CORE7 pillars — used to render the emerging weighting profile in the rail.
+const PILLARS = [
+  { code: "STR", name: "Strategy & Vision", base: 18, kw: ["strategy", "vision", "ambition", "roadmap", "growth", "market", "competitive"] },
+  { code: "GOV", name: "Leadership & Governance", base: 16, kw: ["governance", "sponsor", "leadership", "board", "decision", "funding", "budget"] },
+  { code: "OPM", name: "Operating Model & Process", base: 14, kw: ["process", "operating model", "operations", "efficiency", "cutover", "workflow", "supply"] },
+  { code: "PPL", name: "People & Culture", base: 14, kw: ["people", "culture", "team", "skills", "capability", "adoption", "training", "workforce"] },
+  { code: "TEC", name: "Technology & Data", base: 16, kw: ["technology", "data", "platform", "system", "erp", "cloud", "integration", "digital", "ai", "software"] },
+  { code: "CUS", name: "Customer & Value", base: 12, kw: ["customer", "value", "experience", "service", "revenue", "outcome", "benefit"] },
+  { code: "RSK", name: "Risk & Compliance", base: 10, kw: ["risk", "compliance", "regulatory", "security", "control", "resilience", "audit"] },
+];
+
+const STAGES = [
+  { key: "context", label: "Change context", hint: "What is changing and why" },
+  { key: "survey", label: "Profiling survey", hint: "23 characteristic signals" },
+  { key: "profile", label: "CORE7 weighting", hint: "Generated profile" },
+];
 
 function NewAssessment() {
   const { user } = useAuth();
@@ -29,31 +41,46 @@ function NewAssessment() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: "",
+    title: "",
     description: "",
-    transformation_profile: "Digital",
-    scope_level: "Business unit",
-    complexity_level: "Medium",
-    business_area: "Operations",
-    target_completion_date: "",
-    change_owners: "",
-    pillar_leads: "",
+    objectives: "",
   });
+
+  // Lightweight, client-side signal detection from the free text so the rail
+  // feels analytical as the user types. This is NOT a readiness score — it is a
+  // preview of how the change characteristics begin to shape the CORE7 weights.
+  const corpus = `${form.title} ${form.description} ${form.objectives}`.toLowerCase();
+
+  const emerging = useMemo(() => {
+    const hits = PILLARS.map((p) => {
+      const count = p.kw.reduce((n, k) => (corpus.includes(k) ? n + 1 : n), 0);
+      return { ...p, raw: p.base + count * 6, count };
+    });
+    const total = hits.reduce((n, h) => n + h.raw, 0);
+    return hits
+      .map((h) => ({ ...h, weight: Math.round((h.raw / total) * 100) }))
+      .sort((a, b) => b.weight - a.weight);
+  }, [corpus]);
+
+  const signals = emerging.filter((p) => p.count > 0).slice(0, 4);
+
+  const filled = [form.title, form.description, form.objectives].filter((v) => v.trim().length > 0).length;
+  const progress = Math.round((filled / 3) * 100);
+  const canAdvance = form.title.trim().length > 0 && form.description.trim().length > 0;
 
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
       const a = repo.assessments.create({
         organisation_id: orgId,
-        name: form.name,
+        name: form.title,
         description: form.description || null,
-        transformation_profile: form.transformation_profile,
-        scope_level: form.scope_level,
-        complexity_level: form.complexity_level,
-        business_area: form.business_area,
-        target_completion_date: form.target_completion_date || null,
+        transformation_profile: emerging[0]?.name ?? "Digital",
+        scope_level: "Business unit",
+        complexity_level: "Medium",
+        business_area: "Operations",
+        target_completion_date: null,
         status: "active",
         created_by: user!.id,
       });
@@ -67,124 +94,200 @@ function NewAssessment() {
         actor_id: user!.id,
         actor_email: user!.email,
         event_type: "assessment_created",
-        detail: { note: `Created assessment "${a.name}"` },
+        detail: { note: `Created transformation profile "${a.name}"` },
       });
       return a;
     },
     onSuccess: (a) => {
       qc.invalidateQueries({ queryKey: ["assessments"] });
-      toast.success("Assessment created. Seven pillar workspaces ready.");
+      toast.success("Transformation profile created. Profiling survey ready next.");
       navigate({ to: "/app/assessments/$id", params: { id: a.id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
-  const steps = ["Basics", "Scope & profile", "Owners & leads"];
-  const canNext = step === 1 ? !!form.name : step === 2 ? !!form.scope_level && !!form.complexity_level : true;
-
   return (
     <>
-      <PageHeader eyebrow="New assessment" title="Define a transformation assessment" description="Three steps. We will auto-create the seven CORE7 pillar workspaces and load the default questions, evidence prompts and stakeholder groups for your scope." />
-      <div className="px-8 py-8 max-w-3xl">
-        <div className="flex items-center gap-2 mb-8">
-          {steps.map((label, i) => {
-            const n = i + 1;
-            const done = step > n;
-            const active = step === n;
-            return (
-              <div key={label} className="flex items-center gap-2 flex-1">
-                <div className={cn("h-7 w-7 rounded-full border flex items-center justify-center text-[11px] font-mono", done ? "bg-primary text-primary-foreground border-primary" : active ? "border-primary text-primary" : "border-border text-muted-foreground")}>
-                  {done ? <Check className="h-3.5 w-3.5" /> : n}
+      <PageHeader
+        eyebrow="Transformation intelligence"
+        title="Create Transformation Profile"
+        description="Describe the proposed change. ChangeLens reads its characteristics to generate a dynamic CORE7 weighting profile — the lens that will later tailor your readiness assessment."
+      />
+
+      <div className="px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 max-w-[1400px]">
+          {/* ---- Main column ---- */}
+          <div className="min-w-0 space-y-8">
+            {/* Stage ribbon */}
+            <ol className="flex items-stretch gap-3">
+              {STAGES.map((s, i) => {
+                const active = i === 0;
+                const done = false;
+                return (
+                  <li key={s.key} className={cn(
+                    "flex-1 rounded-sm border px-4 py-3",
+                    active ? "border-primary bg-[color-mix(in_oklab,var(--primary)_6%,transparent)]" : "border-border bg-card opacity-70",
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-mono",
+                        active ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground",
+                      )}>
+                        {done ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                      </span>
+                      <span className={cn("text-[13px] font-medium", !active && "text-muted-foreground")}>{s.label}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground pl-7">{s.hint}</p>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {/* Stage 1 panel */}
+            <div className="rounded-sm border border-border bg-card">
+              <div className="px-6 py-5 border-b border-border">
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" /> Stage 1 · Change context
                 </div>
-                <span className={cn("text-xs", active ? "font-medium" : "text-muted-foreground")}>{label}</span>
-                {n < steps.length && <div className="flex-1 h-px bg-border" />}
+                <h2 className="display text-[20px] mt-1.5" style={{ color: "var(--ink)" }}>Describe the change</h2>
+                <p className="mt-1 text-sm text-muted-foreground max-w-xl">
+                  This stage captures the intent of the change — not its readiness. The richer the context, the sharper the profile ChangeLens can shape.
+                </p>
               </div>
-            );
-          })}
-        </div>
 
-        <div className="border border-border rounded-sm bg-card p-6 space-y-5">
-          {step === 1 && (
-            <>
-              <div>
-                <Label className="text-xs">Assessment name</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. ERP & Operating Model Modernisation" maxLength={200} />
-              </div>
-              <div>
-                <Label className="text-xs">Description <span className="text-muted-foreground">(optional)</span></Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} placeholder="One paragraph the executive sponsor would recognise." maxLength={1000} />
-              </div>
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Transformation profile">
-                  <Select value={form.transformation_profile} onValueChange={(v) => setForm({ ...form, transformation_profile: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{PROFILES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
+              <div className="px-6 py-6 space-y-6">
+                <Field label="Change title" hint="The name a board would recognise.">
+                  <Input
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g. ERP & Operating Model Modernisation"
+                    maxLength={200}
+                  />
                 </Field>
-                <Field label="Business area">
-                  <Select value={form.business_area} onValueChange={(v) => setForm({ ...form, business_area: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{BUSINESS_AREAS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Scope level">
-                  <Select value={form.scope_level} onValueChange={(v) => setForm({ ...form, scope_level: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SCOPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Complexity">
-                  <Select value={form.complexity_level} onValueChange={(v) => setForm({ ...form, complexity_level: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{COMPLEXITY.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-              </div>
-              <Field label="Target completion date">
-                <Input type="date" value={form.target_completion_date} onChange={(e) => setForm({ ...form, target_completion_date: e.target.value })} />
-              </Field>
-              <p className="text-[11px] text-muted-foreground border-l-2 border-primary pl-3">
-                Scope <span className="font-mono">{form.scope_level}</span> · complexity <span className="font-mono">{form.complexity_level}</span> implies proportionate evidence breadth across all seven pillars. You can adjust pillar weights per assessment later.
-              </p>
-            </>
-          )}
-          {step === 3 && (
-            <>
-              <Field label="Change Owners">
-                <Textarea value={form.change_owners} onChange={(e) => setForm({ ...form, change_owners: e.target.value })} rows={2} placeholder="email1@company.com, email2@company.com" />
-                <p className="text-[11px] text-muted-foreground mt-1">Comma-separated emails. Multiple Change Owners supported. We will invite them once team management ships in the next phase.</p>
-              </Field>
-              <Field label="Initial Pillar Leads">
-                <Textarea value={form.pillar_leads} onChange={(e) => setForm({ ...form, pillar_leads: e.target.value })} rows={2} placeholder="lead1@company.com, lead2@company.com" />
-                <p className="text-[11px] text-muted-foreground mt-1">Default leads for new pillars. Individual pillars can override.</p>
-              </Field>
-              <div className="rounded-sm border border-border bg-secondary/40 p-4 text-sm">
-                <div className="font-medium mb-1">Ready to create</div>
-                <p className="text-muted-foreground text-[13px]">We will create <span className="font-mono text-foreground">"{form.name || "your assessment"}"</span>, generate the seven pillar workspaces with starter questions, and move it to status <span className="font-mono text-foreground">Active</span>.</p>
-              </div>
-            </>
-          )}
 
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <Button variant="ghost" onClick={() => step === 1 ? navigate({ to: "/app" }) : setStep(step - 1)}>
-              {step === 1 ? "Cancel" : "Back"}
-            </Button>
-            {step < 3 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={!canNext}>Continue <ChevronRight className="h-3.5 w-3.5" /></Button>
-            ) : (
-              <Button onClick={() => create.mutate()} disabled={create.isPending}>{create.isPending ? "Creating…" : "Create assessment"}</Button>
-            )}
+                <Field label="Change description" hint="What is changing, the trigger, and the intended end state.">
+                  <Textarea
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    rows={5}
+                    placeholder="Describe the transformation in one clear paragraph an executive sponsor would endorse."
+                    maxLength={1500}
+                  />
+                </Field>
+
+                <Field label="Objectives / success criteria" hint="The outcomes that define success — one per line works well.">
+                  <Textarea
+                    value={form.objectives}
+                    onChange={(e) => setForm({ ...form, objectives: e.target.value })}
+                    rows={4}
+                    placeholder={"e.g.\n— Reduce close cycle from 10 to 4 days\n— Single source of operational data\n— 90% process adoption within two quarters"}
+                    maxLength={1500}
+                  />
+                </Field>
+              </div>
+
+              <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4">
+                <Button variant="ghost" onClick={() => navigate({ to: "/app" })}>Cancel</Button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    {canAdvance ? "Ready to profile" : "Add a title and description to continue"}
+                  </span>
+                  <Button onClick={() => create.mutate()} disabled={!canAdvance || create.isPending}>
+                    {create.isPending ? "Creating…" : "Begin profiling survey"}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground border-l-2 border-primary pl-3 max-w-2xl">
+              Next, a short profiling survey (23 characteristic signals) refines the CORE7 weighting shown on the right. The readiness assessment itself comes afterwards, tailored to this profile.
+            </p>
           </div>
+
+          {/* ---- Intelligence rail ---- */}
+          <aside className="lg:sticky lg:top-6 self-start space-y-4">
+            <div className="rounded-sm border border-border bg-card overflow-hidden">
+              <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                  <Radar className="h-3.5 w-3.5 text-primary" /> Intelligence
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground">{progress}%</span>
+              </div>
+
+              {/* Progress */}
+              <div className="px-5 py-4 border-b border-border">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-2">
+                  <span>Profile progress</span>
+                  <span className="font-mono">{filled}/3 inputs</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                  <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+
+              {/* Emerging CORE7 profile */}
+              <div className="px-5 py-4 border-b border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <LensMark size={36} />
+                  <div>
+                    <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>Emerging CORE7 profile</div>
+                    <div className="text-[11px] text-muted-foreground">Live weighting preview</div>
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  {emerging.map((p) => (
+                    <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                      <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <span
+                          className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
+                          style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
+                        />
+                      </span>
+                      <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Top detected signals */}
+              <div className="px-5 py-4">
+                <div className="text-[11px] text-muted-foreground mb-2">Top detected signals</div>
+                {signals.length === 0 ? (
+                  <p className="text-[12px] text-muted-foreground/80 italic">
+                    Start describing the change to surface signals across the seven pillars.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {signals.map((s) => (
+                      <span key={s.code} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {s.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-sm border border-dashed border-border bg-card/60 px-5 py-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Save className="h-3.5 w-3.5" />
+              {canAdvance ? "Draft held locally — saved on profile creation" : "Draft not started"}
+            </div>
+          </aside>
         </div>
       </div>
     </>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><Label className="text-xs">{label}</Label>{children}</div>;
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      {children}
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
 }
