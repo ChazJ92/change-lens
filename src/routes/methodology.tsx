@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Wordmark, LensMark } from "@/components/brand";
+import { cn } from "@/lib/utils";
 import {
   ChevronRight,
   Compass,
