@@ -30,6 +30,9 @@ function Index() {
           <Wordmark size="md" />
           <div className="flex items-center gap-6">
             <span className="eyebrow hidden md:inline">Strategic assurance · CORE7 framework</span>
+            <Link to="/methodology" className="hidden md:inline text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Methodology
+            </Link>
             <Button asChild size="sm" variant="outline" className="rounded-sm">
               <Link to="/app">Open workspace</Link>
             </Button>
