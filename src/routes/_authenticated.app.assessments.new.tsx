@@ -549,8 +549,8 @@ function NewAssessment() {
                       {pageComplete ? "Lens signals captured" : "Profile the questions above to continue"}
                     </span>
                     {isLastPage ? (
-                      <Button onClick={() => create.mutate()} disabled={!allAnswered || create.isPending}>
-                        {create.isPending ? "Generating…" : "Generate transformation profile"}
+                      <Button onClick={goToReview} disabled={!allAnswered}>
+                        Generate transformation profile
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     ) : (
