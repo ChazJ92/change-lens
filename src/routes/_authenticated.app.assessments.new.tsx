@@ -565,6 +565,159 @@ function NewAssessment() {
             </div>
             )}
 
+            {/* Stage 3 — Profile review */}
+            {stage === "review" && (
+            <div className="space-y-6">
+              <div className="rounded-sm border border-border bg-card">
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> Stage 3 · Transformation profile
+                  </div>
+                  <h2 className="display text-[20px] mt-1.5" style={{ color: "var(--ink)" }}>
+                    {form.title || "Transformation profile"}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+                    A dynamic CORE7 weighting derived from your 23 characteristic signals. Review it below,
+                    then confirm to create the profile and open its readiness workspace.
+                  </p>
+                </div>
+
+                {/* Dynamic CORE7 Weighting Profile */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={Layers3} label="Dynamic CORE7 weighting profile" sub="Where readiness effort should concentrate · totals 100%" />
+                  <div className="mt-4 flex flex-col-reverse lg:flex-row lg:items-center gap-6">
+                    <ul className="flex-1 space-y-2.5 min-w-0">
+                      {profile.sorted.map((p, i) => (
+                        <li key={p.code} className="grid grid-cols-[20px_120px_1fr_44px] items-center gap-3">
+                          <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                          <span className="text-[12px] text-foreground truncate">{p.name}</span>
+                          <span className="h-2 rounded-full bg-secondary overflow-hidden">
+                            <span
+                              className="block h-full bg-primary transition-all duration-500"
+                              style={{ width: `${(p.weight / maxWeight) * 100}%` }}
+                            />
+                          </span>
+                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{p.weight}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center gap-3 lg:flex-col lg:items-center shrink-0">
+                      <LensMark size={84} />
+                      <div className="text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Lead lens</div>
+                        <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>{profile.sorted[0]?.name}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CORE7 Pillar Importance Scores + Confidence */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100), with profiling confidence" />
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full text-[12px]">
+                      <thead>
+                        <tr className="text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground text-left border-b border-border">
+                          <th className="py-2 pr-3 font-medium">Pillar</th>
+                          <th className="py-2 px-3 font-medium">Importance</th>
+                          <th className="py-2 px-3 font-medium">Weight</th>
+                          <th className="py-2 pl-3 font-medium">Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profile.pillars.map((p) => {
+                          const c = confidenceLabel(p.confidence, p.answered === p.total);
+                          return (
+                            <tr key={p.code} className="border-b border-border/50 last:border-0">
+                              <td className="py-2.5 pr-3">
+                                <span className="font-mono text-[10px] text-muted-foreground mr-2">{p.code}</span>
+                                <span className="text-foreground">{p.name}</span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-1.5 w-16 rounded-full bg-secondary overflow-hidden">
+                                    <span className="block h-full bg-primary" style={{ width: `${p.importance}%` }} />
+                                  </span>
+                                  <span className="font-mono text-muted-foreground">{p.importance}</span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 font-mono" style={{ color: "var(--ink)" }}>{p.weight}%</td>
+                              <td className={cn("py-2.5 pl-3", c.tone)}>{c.label}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Top active drivers */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this weighting" />
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {profile.topDrivers.slice(0, 6).map((d) => (
+                      <span key={d.q} className="inline-flex items-center gap-2 rounded-sm border border-border bg-secondary px-2.5 py-1 text-[12px]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {d.name}
+                        <span className="font-mono text-[10px] text-muted-foreground">{d.score}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Driver scores (full, transparent) */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={BarChart3} label="Driver scores" sub="Every characteristic signal mapped to its primary lens" />
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                    {profile.drivers.map((d) => (
+                      <div key={d.q} className="grid grid-cols-[1fr_60px_28px] items-center gap-2">
+                        <span className="text-[12px] text-foreground truncate">
+                          <span className="font-mono text-[9px] text-muted-foreground mr-1.5">{d.topPillar}</span>
+                          {d.name}
+                        </span>
+                        <span className="h-1 rounded-full bg-secondary overflow-hidden">
+                          <span className="block h-full bg-primary/70" style={{ width: `${d.score}%` }} />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{d.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Confidence + methodology note */}
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
+                        Confidence rating · <span className={overallConfidence.tone}>{overallConfidence.label}</span>
+                      </div>
+                      <p className="mt-1 text-[12px] text-muted-foreground max-w-2xl">
+                        This profile <span className="text-foreground">shapes</span> the later readiness assessment by directing
+                        analytical weight towards the lenses most implicated in the change. It does not itself measure readiness —
+                        it calibrates how readiness will be assessed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 flex items-center justify-between gap-4">
+                  <Button variant="ghost" onClick={() => { setStage("survey"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Revisit survey
+                  </Button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">Profile ready to create</span>
+                    <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                      {create.isPending ? "Creating…" : "Create transformation profile"}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            )}
+
             {stage === "context" && (
               <p className="text-[11px] text-muted-foreground border-l-2 border-primary pl-3 max-w-2xl">
                 Next, a short profiling survey (23 characteristic signals) refines the CORE7 weighting shown on the right. The readiness assessment itself comes afterwards, tailored to this profile.
