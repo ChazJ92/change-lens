@@ -1,0 +1,167 @@
+/**
+ * Canonical CORE7 pillar source of truth.
+ *
+ * These are the seven ChangeLens CORE7 pillars. Names here are authoritative —
+ * UI must render `name` in primary surfaces and may only use `abbr` (the
+ * approved abbreviation) in genuinely space-constrained, compact contexts.
+ *
+ * Never display the raw stable `code` or any legacy abbreviation
+ * (STR, GOV, TEC, OPM, PPL, CUS, RSK) in the UI.
+ */
+export type PillarAbbr = "SAL" | "DQI" | "PRM" | "TAT" | "PAC" | "GAR" | "OAD";
+
+export interface CanonicalPillar {
+  /** Stable snake_case code aligned with the database `pillars.code`. */
+  code: string;
+  /** Approved abbreviation for compact UI only. */
+  abbr: PillarAbbr;
+  /** Canonical full name — the single source of truth for display. */
+  name: string;
+  default_weight: number;
+  display_order: number;
+  description: string;
+  subdimensions: string[];
+}
+
+export const CORE7_PILLARS: CanonicalPillar[] = [
+  {
+    code: "strategy_leadership",
+    abbr: "SAL",
+    name: "Strategic Alignment & Leadership",
+    default_weight: 20,
+    display_order: 1,
+    description:
+      "Clarity of strategic intent, executive sponsorship, decision rights and alignment of the transformation to enterprise strategy.",
+    subdimensions: [
+      "Strategic clarity",
+      "Executive sponsorship",
+      "Decision rights",
+      "Alignment to enterprise priorities",
+      "Investment commitment",
+    ],
+  },
+  {
+    code: "data_quality_insight",
+    abbr: "DQI",
+    name: "Data Quality & Insight",
+    default_weight: 7,
+    display_order: 2,
+    description:
+      "Trustworthy data, single source of truth, analytics maturity and the ability to evidence the case for change.",
+    subdimensions: [
+      "Data trust & quality",
+      "Single source of truth",
+      "Analytics & insight",
+      "Data governance",
+      "Evidence-based decision making",
+    ],
+  },
+  {
+    code: "process_maturity",
+    abbr: "PRM",
+    name: "Process Maturity",
+    default_weight: 12,
+    display_order: 3,
+    description:
+      "Standardisation, documentation, performance management, process ownership and continuous improvement.",
+    subdimensions: [
+      "Process documentation",
+      "Standardisation",
+      "Performance management",
+      "Process ownership",
+      "Continuous improvement",
+    ],
+  },
+  {
+    code: "technology_tooling",
+    abbr: "TAT",
+    name: "Technology & Tooling",
+    default_weight: 15,
+    display_order: 4,
+    description:
+      "Fitness, scalability and supportability of the technology landscape underpinning the transformation.",
+    subdimensions: [
+      "Architecture fitness",
+      "Scalability",
+      "Supportability",
+      "Integration",
+      "Technical debt",
+    ],
+  },
+  {
+    code: "people_capability",
+    abbr: "PAC",
+    name: "People & Capability",
+    default_weight: 18,
+    display_order: 5,
+    description:
+      "Skills, capacity, learning culture and capability to absorb and operate the change.",
+    subdimensions: [
+      "Skills & capability",
+      "Capacity",
+      "Learning culture",
+      "Talent strategy",
+      "Knowledge management",
+    ],
+  },
+  {
+    code: "governance_risk",
+    abbr: "GAR",
+    name: "Governance & Risk",
+    default_weight: 10,
+    display_order: 6,
+    description:
+      "Governance forums, risk management, compliance, control environment and assurance.",
+    subdimensions: [
+      "Governance design",
+      "Risk management",
+      "Compliance posture",
+      "Control environment",
+      "Assurance & audit",
+    ],
+  },
+  {
+    code: "organisational_adaptability",
+    abbr: "OAD",
+    name: "Organisational Adaptability",
+    default_weight: 18,
+    display_order: 7,
+    description:
+      "Change appetite, behavioural readiness, communications and the ability to sustain the change.",
+    subdimensions: [
+      "Change appetite",
+      "Behavioural readiness",
+      "Communications",
+      "Adoption & sustainment",
+      "Resilience",
+    ],
+  },
+];
+
+const BY_CODE = new Map(CORE7_PILLARS.map((p) => [p.code, p]));
+const BY_ABBR = new Map(CORE7_PILLARS.map((p) => [p.abbr, p]));
+const BY_NAME = new Map(CORE7_PILLARS.map((p) => [p.name.toLowerCase(), p]));
+
+/** Resolve a pillar from a code, approved abbreviation, or canonical name. */
+export function resolvePillar(key?: string | null): CanonicalPillar | undefined {
+  if (!key) return undefined;
+  return BY_CODE.get(key) ?? BY_ABBR.get(key as PillarAbbr) ?? BY_NAME.get(key.toLowerCase());
+}
+
+/**
+ * Deterministic full-name label. Falls back to the resolved canonical name,
+ * otherwise returns a humanised version of the input so labels never drift to
+ * raw codes in the UI.
+ */
+export function pillarLabel(key?: string | null, fallbackName?: string | null): string {
+  const p = resolvePillar(key);
+  if (p) return p.name;
+  if (fallbackName) return fallbackName;
+  if (!key) return "—";
+  return key.replace(/_/g, " ");
+}
+
+/** Approved abbreviation for compact UI only. */
+export function pillarAbbr(key?: string | null): string {
+  return resolvePillar(key)?.abbr ?? "";
+}
