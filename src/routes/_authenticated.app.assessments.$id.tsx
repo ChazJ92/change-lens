@@ -50,6 +50,13 @@ function AssessmentOverview() {
 
   const statusTone = a.status === "complete" ? "success" : a.status === "in_review" ? "warning" : "info";
 
+  const profile = parseProfile(a.transformation_profile);
+  const topPillars = [...p]
+    .sort((x: any, y: any) => Number(y.default_weight ?? 0) - Number(x.default_weight ?? 0))
+    .slice(0, 3);
+  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => Number(x.default_weight ?? 0)));
+  const complexityLabel = a.complexity_level ?? "—";
+
   return (
     <>
       <PageHeader
