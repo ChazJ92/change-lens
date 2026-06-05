@@ -126,6 +126,99 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+// ---- Transparent local scoring model (CORE7 methodology) --------------------
+// Each survey answer maps to a named *driver*. Driver scores aggregate into the
+// seven CORE7 *pillar importance* scores, which normalise into a *weighting
+// profile*. The profile shapes the later readiness assessment — it does not
+// itself measure readiness.
+type Weights = Partial<Record<string, number>>;
+type Driver = { q: string; name: string; w: Weights };
+
+const DRIVERS: Driver[] = [
+  { q: "q1", name: "Scale of Impact", w: { STR: 0.6, PPL: 0.4 } },
+  { q: "q2", name: "Organisational Reach", w: { STR: 1 } },
+  { q: "q3", name: "Leadership Alignment Complexity", w: { GOV: 1 } },
+  { q: "q4", name: "Awareness Dependency", w: { PPL: 0.6, GOV: 0.4 } },
+  { q: "q5", name: "Sponsorship Dependency", w: { GOV: 1 } },
+  { q: "q6", name: "Data Dependency", w: { TEC: 0.7, CUS: 0.3 } },
+  { q: "q7", name: "Insight & Reporting Demand", w: { TEC: 0.6, CUS: 0.4 } },
+  { q: "q8", name: "Measurement Change", w: { CUS: 0.6, STR: 0.4 } },
+  { q: "q9", name: "Process Redesign", w: { OPM: 1 } },
+  { q: "q10", name: "Ways-of-Working Change", w: { OPM: 0.6, PPL: 0.4 } },
+  { q: "q11", name: "Process Integration", w: { OPM: 1 } },
+  { q: "q12", name: "Technology Footprint", w: { TEC: 1 } },
+  { q: "q13", name: "Integration Complexity", w: { TEC: 1 } },
+  { q: "q14", name: "Technical Complexity", w: { TEC: 1 } },
+  { q: "q15", name: "Capability Gap", w: { PPL: 1 } },
+  { q: "q16", name: "Role Change", w: { PPL: 0.7, OPM: 0.3 } },
+  { q: "q17", name: "Specialist Dependency", w: { PPL: 0.6, TEC: 0.4 } },
+  { q: "q18", name: "Risk & Control Demand", w: { RSK: 1 } },
+  { q: "q19", name: "Regulatory Exposure", w: { RSK: 1 } },
+  { q: "q20", name: "Coordination Complexity", w: { GOV: 0.6, OPM: 0.4 } },
+  { q: "q21", name: "Behaviour Change", w: { PPL: 0.7, CUS: 0.3 } },
+  { q: "q22", name: "Mindset Shift", w: { PPL: 1 } },
+  { q: "q23", name: "Cultural Challenge", w: { PPL: 0.6, GOV: 0.4 } },
+];
+
+const QMAP: Record<string, SurveyQuestion> = Object.fromEntries(
+  SURVEY.flatMap((l) => l.questions).map((q) => [q.id, q]),
+);
+
+type ScoredDriver = Driver & { answered: boolean; score: number; topPillar: string };
+type ScoredPillar = {
+  code: string;
+  name: string;
+  importance: number;
+  weight: number;
+  confidence: number;
+  answered: number;
+  total: number;
+};
+
+function computeProfile(answers: Record<string, string>) {
+  const drivers: ScoredDriver[] = DRIVERS.map((d) => {
+    const opts = QMAP[d.q]?.options ?? [];
+    const ans = answers[d.q];
+    const idx = ans ? opts.indexOf(ans) : -1;
+    const answered = idx >= 0;
+    const score = answered && opts.length > 1 ? Math.round((idx / (opts.length - 1)) * 100) : 0;
+    const topPillar = Object.entries(d.w).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? "STR";
+    return { ...d, answered, score, topPillar };
+  });
+
+  const pillars: ScoredPillar[] = PILLARS.map((p) => {
+    const contrib = drivers.filter((d) => d.w[p.code] != null);
+    const done = contrib.filter((d) => d.answered);
+    let importance = 50;
+    if (done.length) {
+      const wsum = done.reduce((s, d) => s + (d.w[p.code] ?? 0), 0) || 1;
+      importance = Math.round(done.reduce((s, d) => s + d.score * (d.w[p.code] ?? 0), 0) / wsum);
+    }
+    const confidence = contrib.length ? Math.round((done.length / contrib.length) * 100) : 0;
+    return { code: p.code, name: p.name, importance, weight: 0, confidence, answered: done.length, total: contrib.length };
+  });
+
+  const totalImp = pillars.reduce((s, p) => s + p.importance, 0) || 1;
+  pillars.forEach((p) => (p.weight = Math.round((p.importance / totalImp) * 100)));
+  // reconcile rounding so weights total exactly 100%
+  const drift = 100 - pillars.reduce((s, p) => s + p.weight, 0);
+  if (drift !== 0) {
+    const top = [...pillars].sort((a, b) => b.weight - a.weight)[0];
+    if (top) top.weight += drift;
+  }
+
+  const sorted = [...pillars].sort((a, b) => b.weight - a.weight);
+  const topDrivers = drivers.filter((d) => d.answered).sort((a, b) => b.score - a.score);
+  return { drivers, pillars, sorted, topDrivers };
+}
+
+function confidenceLabel(pct: number, complete: boolean): { label: string; tone: string } {
+  if (complete) return { label: "High", tone: "text-primary" };
+  if (pct < 40) return { label: "Provisional · Low", tone: "text-muted-foreground" };
+  if (pct < 75) return { label: "Provisional · Moderate", tone: "text-muted-foreground" };
+  return { label: "Provisional · High", tone: "text-foreground" };
+}
+
 function NewAssessment() {
   const { user } = useAuth();
   const { data: orgData } = useCurrentOrg();
