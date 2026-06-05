@@ -866,6 +866,8 @@ function NewAssessment() {
               <Save className="h-3.5 w-3.5" />
               {stage === "survey"
                 ? `Responses held locally — ${answeredCount}/${totalQuestions} captured`
+                : stage === "review"
+                ? "Profile generated locally — persisted on creation"
                 : canAdvance ? "Draft held locally — saved on profile creation" : "Draft not started"}
             </div>
           </aside>
