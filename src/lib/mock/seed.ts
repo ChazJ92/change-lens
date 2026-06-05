@@ -1,4 +1,5 @@
 import { emptyDb, type MockDb } from "./db";
+import { CORE7_PILLARS } from "@/lib/pillars";
 
 /**
  * Realistic seed data for offline / demo testing.
@@ -94,15 +95,15 @@ export function buildSeed(): MockDb {
   ];
 
   // --- Pillars (CORE7) -----------------------------------------------------
-  const pillarDefs = [
-    { code: "STR", name: "Strategy & Vision", default_weight: 18, display_order: 1, description: "Clarity of transformation ambition, alignment to enterprise strategy and a credible, sequenced roadmap.", subs: ["Ambition & case for change", "Strategic alignment", "Roadmap & sequencing"] },
-    { code: "GOV", name: "Leadership & Governance", default_weight: 16, display_order: 2, description: "Executive sponsorship, decision rights, funding governance and the cadence that keeps change on track.", subs: ["Sponsorship & accountability", "Decision rights", "Funding & benefits governance"] },
-    { code: "OPM", name: "Operating Model & Process", default_weight: 14, display_order: 3, description: "Target operating model design, process maturity and the ability to operate the future state at scale.", subs: ["Operating model design", "Process maturity", "Transition & cutover readiness"] },
-    { code: "PPL", name: "People & Culture", default_weight: 14, display_order: 4, description: "Capability, capacity, change adoption and the cultural conditions for the transformation to stick.", subs: ["Capability & capacity", "Change & adoption", "Culture & ways of working"] },
-    { code: "TEC", name: "Technology & Data", default_weight: 16, display_order: 5, description: "Architecture fit, data foundations, integration and the technology delivery capability behind the change.", subs: ["Architecture & platforms", "Data foundations", "Integration & delivery"] },
-    { code: "CUS", name: "Customer & Value", default_weight: 12, display_order: 6, description: "Customer outcomes, value realisation and the measurement that proves the transformation is working.", subs: ["Customer outcomes", "Value realisation", "Measurement & insight"] },
-    { code: "RSK", name: "Risk & Compliance", default_weight: 10, display_order: 7, description: "Delivery, operational and regulatory risk, plus the controls and resilience that protect the outcome.", subs: ["Delivery risk", "Regulatory & compliance", "Resilience & controls"] },
-  ];
+  // Canonical CORE7 pillars — single source of truth in src/lib/pillars.ts.
+  const pillarDefs = CORE7_PILLARS.map((p) => ({
+    code: p.code,
+    name: p.name,
+    default_weight: p.default_weight,
+    display_order: p.display_order,
+    description: p.description,
+    subs: p.subdimensions,
+  }));
   const pillars = pillarDefs.map((p) => ({
     id: uid(),
     code: p.code,
@@ -252,10 +253,10 @@ export function buildSeed(): MockDb {
   // --- Audit logs (activity) ----------------------------------------------
   db.audit_logs = [
     { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "ERP & Operating Model Modernisation"' }, created_at: iso(days(35)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategy & Vision for review" }, created_at: iso(days(5)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Operating Model & Process" }, created_at: iso(days(2)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategy & Vision: 3.4 → 3.6" }, created_at: iso(days(3)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategy & Vision" }, created_at: iso(days(4)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategic Alignment & Leadership for review" }, created_at: iso(days(5)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Process Maturity" }, created_at: iso(days(2)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategic Alignment & Leadership: 3.4 → 3.6" }, created_at: iso(days(3)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategic Alignment & Leadership" }, created_at: iso(days(4)) },
     { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_status_changed", detail: { note: "Moved to In review" }, created_at: iso(days(2)) },
     { id: uid(), organisation_id: orgMeridian, assessment_id: a3, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Cloud Migration Programme"' }, created_at: iso(days(8)) },
     { id: uid(), organisation_id: orgDemo, assessment_id: a4, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Demo: Enterprise Digital Readiness"' }, created_at: iso(days(20)) },
@@ -264,7 +265,7 @@ export function buildSeed(): MockDb {
   // --- Surveys + recipients (stakeholder input) ---------------------------
   const survey1 = uid();
   db.surveys = [
-    { id: survey1, assessment_id: a1, pillar_id: pillarByOrder(4), title: "People & Culture readiness pulse", description: "Short pulse for the operating-model working group.", created_at: iso(days(6)) },
+    { id: survey1, assessment_id: a1, pillar_id: pillarByOrder(4), title: "Technology & Tooling readiness pulse", description: "Short pulse for the operating-model working group.", created_at: iso(days(6)) },
   ];
   db.survey_recipients = [
     { id: uid(), survey_id: survey1, email: "lead.eng@meridiancapital.com", name: "J. Okafor", stakeholder_group: "Engineering", token: uid(), submitted_at: iso(days(4)), created_at: iso(days(6)) },

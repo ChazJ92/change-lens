@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
+import { pillarLabel } from "@/lib/pillars";
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2, Sparkles, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
 });
 
 // Parse the compact profile summary persisted by the profiling flow, e.g.
-// "Technology & Data (38%)" → { lead, weight }. Falls back gracefully.
+// "Technology & Tooling (38%)" → { lead, weight }. Falls back gracefully.
 function parseProfile(s?: string | null) {
   if (!s) return { lead: null as string | null, weight: null as number | null };
   const m = s.match(/^(.*?)\s*\((\d+)%\)\s*$/);
@@ -229,7 +230,7 @@ function AssessmentOverview() {
               return (
                 <div key={`${row.id}-${i}`} className="py-2 border-b border-border last:border-0 text-sm flex items-start justify-between gap-3">
                   <span className="leading-snug">{m}</span>
-                  <span className="eyebrow whitespace-nowrap">{pillar?.code?.replace(/_/g, " ")}</span>
+                  <span className="eyebrow whitespace-nowrap">{pillarLabel(pillar?.code, pillar?.name)}</span>
                 </div>
               );
             }))}
