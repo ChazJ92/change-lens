@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LensMark } from "@/components/brand";
 import { toast } from "sonner";
-import { ArrowRight, ArrowLeft, Sparkles, Radar, Save, CheckCircle2, Check, ListChecks } from "lucide-react";
+import { ArrowRight, ArrowLeft, Sparkles, Radar, Save, CheckCircle2, Check, ListChecks, Gauge, Layers3, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/new")({
@@ -126,6 +126,99 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+// ---- Transparent local scoring model (CORE7 methodology) --------------------
+// Each survey answer maps to a named *driver*. Driver scores aggregate into the
+// seven CORE7 *pillar importance* scores, which normalise into a *weighting
+// profile*. The profile shapes the later readiness assessment — it does not
+// itself measure readiness.
+type Weights = Partial<Record<string, number>>;
+type Driver = { q: string; name: string; w: Weights };
+
+const DRIVERS: Driver[] = [
+  { q: "q1", name: "Scale of Impact", w: { STR: 0.6, PPL: 0.4 } },
+  { q: "q2", name: "Organisational Reach", w: { STR: 1 } },
+  { q: "q3", name: "Leadership Alignment Complexity", w: { GOV: 1 } },
+  { q: "q4", name: "Awareness Dependency", w: { PPL: 0.6, GOV: 0.4 } },
+  { q: "q5", name: "Sponsorship Dependency", w: { GOV: 1 } },
+  { q: "q6", name: "Data Dependency", w: { TEC: 0.7, CUS: 0.3 } },
+  { q: "q7", name: "Insight & Reporting Demand", w: { TEC: 0.6, CUS: 0.4 } },
+  { q: "q8", name: "Measurement Change", w: { CUS: 0.6, STR: 0.4 } },
+  { q: "q9", name: "Process Redesign", w: { OPM: 1 } },
+  { q: "q10", name: "Ways-of-Working Change", w: { OPM: 0.6, PPL: 0.4 } },
+  { q: "q11", name: "Process Integration", w: { OPM: 1 } },
+  { q: "q12", name: "Technology Footprint", w: { TEC: 1 } },
+  { q: "q13", name: "Integration Complexity", w: { TEC: 1 } },
+  { q: "q14", name: "Technical Complexity", w: { TEC: 1 } },
+  { q: "q15", name: "Capability Gap", w: { PPL: 1 } },
+  { q: "q16", name: "Role Change", w: { PPL: 0.7, OPM: 0.3 } },
+  { q: "q17", name: "Specialist Dependency", w: { PPL: 0.6, TEC: 0.4 } },
+  { q: "q18", name: "Risk & Control Demand", w: { RSK: 1 } },
+  { q: "q19", name: "Regulatory Exposure", w: { RSK: 1 } },
+  { q: "q20", name: "Coordination Complexity", w: { GOV: 0.6, OPM: 0.4 } },
+  { q: "q21", name: "Behaviour Change", w: { PPL: 0.7, CUS: 0.3 } },
+  { q: "q22", name: "Mindset Shift", w: { PPL: 1 } },
+  { q: "q23", name: "Cultural Challenge", w: { PPL: 0.6, GOV: 0.4 } },
+];
+
+const QMAP: Record<string, SurveyQuestion> = Object.fromEntries(
+  SURVEY.flatMap((l) => l.questions).map((q) => [q.id, q]),
+);
+
+type ScoredDriver = Driver & { answered: boolean; score: number; topPillar: string };
+type ScoredPillar = {
+  code: string;
+  name: string;
+  importance: number;
+  weight: number;
+  confidence: number;
+  answered: number;
+  total: number;
+};
+
+function computeProfile(answers: Record<string, string>) {
+  const drivers: ScoredDriver[] = DRIVERS.map((d) => {
+    const opts = QMAP[d.q]?.options ?? [];
+    const ans = answers[d.q];
+    const idx = ans ? opts.indexOf(ans) : -1;
+    const answered = idx >= 0;
+    const score = answered && opts.length > 1 ? Math.round((idx / (opts.length - 1)) * 100) : 0;
+    const topPillar = Object.entries(d.w).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? "STR";
+    return { ...d, answered, score, topPillar };
+  });
+
+  const pillars: ScoredPillar[] = PILLARS.map((p) => {
+    const contrib = drivers.filter((d) => d.w[p.code] != null);
+    const done = contrib.filter((d) => d.answered);
+    let importance = 50;
+    if (done.length) {
+      const wsum = done.reduce((s, d) => s + (d.w[p.code] ?? 0), 0) || 1;
+      importance = Math.round(done.reduce((s, d) => s + d.score * (d.w[p.code] ?? 0), 0) / wsum);
+    }
+    const confidence = contrib.length ? Math.round((done.length / contrib.length) * 100) : 0;
+    return { code: p.code, name: p.name, importance, weight: 0, confidence, answered: done.length, total: contrib.length };
+  });
+
+  const totalImp = pillars.reduce((s, p) => s + p.importance, 0) || 1;
+  pillars.forEach((p) => (p.weight = Math.round((p.importance / totalImp) * 100)));
+  // reconcile rounding so weights total exactly 100%
+  const drift = 100 - pillars.reduce((s, p) => s + p.weight, 0);
+  if (drift !== 0) {
+    const top = [...pillars].sort((a, b) => b.weight - a.weight)[0];
+    if (top) top.weight += drift;
+  }
+
+  const sorted = [...pillars].sort((a, b) => b.weight - a.weight);
+  const topDrivers = drivers.filter((d) => d.answered).sort((a, b) => b.score - a.score);
+  return { drivers, pillars, sorted, topDrivers };
+}
+
+function confidenceLabel(pct: number, complete: boolean): { label: string; tone: string } {
+  if (complete) return { label: "High", tone: "text-primary" };
+  if (pct < 40) return { label: "Provisional · Low", tone: "text-muted-foreground" };
+  if (pct < 75) return { label: "Provisional · Moderate", tone: "text-muted-foreground" };
+  return { label: "Provisional · High", tone: "text-foreground" };
+}
+
 function NewAssessment() {
   const { user } = useAuth();
   const { data: orgData } = useCurrentOrg();
@@ -133,7 +226,7 @@ function NewAssessment() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [stage, setStage] = useState<"context" | "survey">("context");
+  const [stage, setStage] = useState<"context" | "survey" | "review">("context");
   const [lensIndex, setLensIndex] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -176,6 +269,12 @@ function NewAssessment() {
     0,
   );
   const surveyProgress = Math.round((answeredCount / totalQuestions) * 100);
+
+  // Answer-driven CORE7 profile — updates live as questions are answered.
+  const profile = useMemo(() => computeProfile(answers), [answers]);
+  const profileComplete = answeredCount === totalQuestions;
+  const overallConfidence = confidenceLabel(surveyProgress, profileComplete);
+  const maxWeight = Math.max(1, ...profile.sorted.map((p) => p.weight));
 
   const lensAnswered = (l: SurveyLens) => l.questions.filter((q) => answers[q.id]).length;
   const lensComplete = (l: SurveyLens) => lensAnswered(l) === l.questions.length;
@@ -224,16 +323,26 @@ function NewAssessment() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function goToReview() {
+    setStage("review");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
+      const top = profile.sorted[0];
+      const avg = profile.topDrivers.length
+        ? Math.round(profile.topDrivers.reduce((s, d) => s + d.score, 0) / profile.topDrivers.length)
+        : 0;
+      const complexity = avg >= 67 ? "High" : avg >= 34 ? "Medium" : "Low";
       const a = repo.assessments.create({
         organisation_id: orgId,
         name: form.title,
         description: form.description || null,
-        transformation_profile: emerging[0]?.name ?? "Digital",
-        scope_level: "Business unit",
-        complexity_level: "Medium",
+        transformation_profile: top ? `${top.name} (${top.weight}%)` : "Balanced",
+        scope_level: answers["q2"] || "Business unit",
+        complexity_level: complexity,
         business_area: "Operations",
         target_completion_date: null,
         status: "active",
@@ -255,7 +364,7 @@ function NewAssessment() {
     },
     onSuccess: (a) => {
       qc.invalidateQueries({ queryKey: ["assessments"] });
-      toast.success("Transformation profile created. Profiling survey ready next.");
+      toast.success("Transformation profile created. Readiness workspace ready.");
       navigate({ to: "/app/assessments/$id", params: { id: a.id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -276,7 +385,7 @@ function NewAssessment() {
             {/* Stage ribbon */}
             <ol className="flex items-stretch gap-3">
               {STAGES.map((s, i) => {
-                const activeIndex = stage === "context" ? 0 : 1;
+                const activeIndex = stage === "context" ? 0 : stage === "survey" ? 1 : 2;
                 const active = i === activeIndex;
                 const done = i < activeIndex;
                 return (
@@ -440,8 +549,8 @@ function NewAssessment() {
                       {pageComplete ? "Lens signals captured" : "Profile the questions above to continue"}
                     </span>
                     {isLastPage ? (
-                      <Button onClick={() => create.mutate()} disabled={!allAnswered || create.isPending}>
-                        {create.isPending ? "Generating…" : "Generate transformation profile"}
+                      <Button onClick={goToReview} disabled={!allAnswered}>
+                        Generate transformation profile
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     ) : (
@@ -450,6 +559,159 @@ function NewAssessment() {
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            )}
+
+            {/* Stage 3 — Profile review */}
+            {stage === "review" && (
+            <div className="space-y-6">
+              <div className="rounded-sm border border-border bg-card">
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> Stage 3 · Transformation profile
+                  </div>
+                  <h2 className="display text-[20px] mt-1.5" style={{ color: "var(--ink)" }}>
+                    {form.title || "Transformation profile"}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+                    A dynamic CORE7 weighting derived from your 23 characteristic signals. Review it below,
+                    then confirm to create the profile and open its readiness workspace.
+                  </p>
+                </div>
+
+                {/* Dynamic CORE7 Weighting Profile */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={Layers3} label="Dynamic CORE7 weighting profile" sub="Where readiness effort should concentrate · totals 100%" />
+                  <div className="mt-4 flex flex-col-reverse lg:flex-row lg:items-center gap-6">
+                    <ul className="flex-1 space-y-2.5 min-w-0">
+                      {profile.sorted.map((p, i) => (
+                        <li key={p.code} className="grid grid-cols-[20px_120px_1fr_44px] items-center gap-3">
+                          <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                          <span className="text-[12px] text-foreground truncate">{p.name}</span>
+                          <span className="h-2 rounded-full bg-secondary overflow-hidden">
+                            <span
+                              className="block h-full bg-primary transition-all duration-500"
+                              style={{ width: `${(p.weight / maxWeight) * 100}%` }}
+                            />
+                          </span>
+                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{p.weight}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center gap-3 lg:flex-col lg:items-center shrink-0">
+                      <LensMark size={84} />
+                      <div className="text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Lead lens</div>
+                        <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>{profile.sorted[0]?.name}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CORE7 Pillar Importance Scores + Confidence */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100), with profiling confidence" />
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full text-[12px]">
+                      <thead>
+                        <tr className="text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground text-left border-b border-border">
+                          <th className="py-2 pr-3 font-medium">Pillar</th>
+                          <th className="py-2 px-3 font-medium">Importance</th>
+                          <th className="py-2 px-3 font-medium">Weight</th>
+                          <th className="py-2 pl-3 font-medium">Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profile.pillars.map((p) => {
+                          const c = confidenceLabel(p.confidence, p.answered === p.total);
+                          return (
+                            <tr key={p.code} className="border-b border-border/50 last:border-0">
+                              <td className="py-2.5 pr-3">
+                                <span className="font-mono text-[10px] text-muted-foreground mr-2">{p.code}</span>
+                                <span className="text-foreground">{p.name}</span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-1.5 w-16 rounded-full bg-secondary overflow-hidden">
+                                    <span className="block h-full bg-primary" style={{ width: `${p.importance}%` }} />
+                                  </span>
+                                  <span className="font-mono text-muted-foreground">{p.importance}</span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 font-mono" style={{ color: "var(--ink)" }}>{p.weight}%</td>
+                              <td className={cn("py-2.5 pl-3", c.tone)}>{c.label}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Top active drivers */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this weighting" />
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {profile.topDrivers.slice(0, 6).map((d) => (
+                      <span key={d.q} className="inline-flex items-center gap-2 rounded-sm border border-border bg-secondary px-2.5 py-1 text-[12px]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {d.name}
+                        <span className="font-mono text-[10px] text-muted-foreground">{d.score}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Driver scores (full, transparent) */}
+                <div className="px-6 py-6 border-b border-border">
+                  <SectionTitle icon={BarChart3} label="Driver scores" sub="Every characteristic signal mapped to its primary lens" />
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                    {profile.drivers.map((d) => (
+                      <div key={d.q} className="grid grid-cols-[1fr_60px_28px] items-center gap-2">
+                        <span className="text-[12px] text-foreground truncate">
+                          <span className="font-mono text-[9px] text-muted-foreground mr-1.5">{d.topPillar}</span>
+                          {d.name}
+                        </span>
+                        <span className="h-1 rounded-full bg-secondary overflow-hidden">
+                          <span className="block h-full bg-primary/70" style={{ width: `${d.score}%` }} />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{d.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Confidence + methodology note */}
+                <div className="px-6 py-5 border-b border-border">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
+                        Confidence rating · <span className={overallConfidence.tone}>{overallConfidence.label}</span>
+                      </div>
+                      <p className="mt-1 text-[12px] text-muted-foreground max-w-2xl">
+                        This profile <span className="text-foreground">shapes</span> the later readiness assessment by directing
+                        analytical weight towards the lenses most implicated in the change. It does not itself measure readiness —
+                        it calibrates how readiness will be assessed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 flex items-center justify-between gap-4">
+                  <Button variant="ghost" onClick={() => { setStage("survey"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Revisit survey
+                  </Button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-muted-foreground hidden sm:inline">Profile ready to create</span>
+                    <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                      {create.isPending ? "Creating…" : "Create transformation profile"}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -521,44 +783,78 @@ function NewAssessment() {
                   <div>
                     <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>Emerging CORE7 profile</div>
                     <div className="text-[11px] text-muted-foreground">
-                      {stage === "survey" ? "Refines as you profile" : "Live weighting preview"}
+                      {stage === "context" ? "Live weighting preview" : stage === "survey" ? "Refines as you profile" : "Generated weighting"}
                     </div>
                   </div>
                 </div>
-                <ul className="space-y-2">
-                  {emerging.map((p) => (
-                    <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                      <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
-                      <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <span
-                          className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
-                          style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
-                        />
-                      </span>
-                      <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                    </li>
-                  ))}
-                </ul>
+                {stage === "context" ? (
+                  <ul className="space-y-2">
+                    {emerging.map((p) => (
+                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                          <span
+                            className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
+                            style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
+                          />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-2">
+                    {profile.sorted.map((p) => (
+                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                          <span
+                            className="block h-full bg-primary transition-all duration-500"
+                            style={{ width: `${(p.weight / maxWeight) * 100}%` }}
+                          />
+                        </span>
+                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {stage === "survey" && (
                   <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
-                    Placeholder preview — final weighting is computed from your survey responses when the profile is generated.
+                    Provisional — confidence {overallConfidence.label.replace("Provisional · ", "").toLowerCase()} until all 23 signals are profiled.
                   </p>
                 )}
               </div>
 
-              {/* Top detected signals */}
+              {/* Active signals */}
               <div className="px-5 py-4">
-                <div className="text-[11px] text-muted-foreground mb-2">Top detected signals</div>
-                {signals.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground mb-2">
+                  {stage === "context" ? "Top detected signals" : "Top active drivers"}
+                </div>
+                {stage === "context" ? (
+                  signals.length === 0 ? (
+                    <p className="text-[12px] text-muted-foreground/80 italic">
+                      Start describing the change to surface signals across the seven pillars.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {signals.map((s) => (
+                        <span key={s.code} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                ) : profile.topDrivers.length === 0 ? (
                   <p className="text-[12px] text-muted-foreground/80 italic">
-                    Start describing the change to surface signals across the seven pillars.
+                    Answer questions to surface the strongest characteristic drivers.
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
-                    {signals.map((s) => (
-                      <span key={s.code} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
+                    {profile.topDrivers.slice(0, 4).map((d) => (
+                      <span key={d.q} className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2 py-0.5 text-[11px]">
                         <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        {s.name}
+                        {d.name}
                       </span>
                     ))}
                   </div>
@@ -570,6 +866,8 @@ function NewAssessment() {
               <Save className="h-3.5 w-3.5" />
               {stage === "survey"
                 ? `Responses held locally — ${answeredCount}/${totalQuestions} captured`
+                : stage === "review"
+                ? "Profile generated locally — persisted on creation"
                 : canAdvance ? "Draft held locally — saved on profile creation" : "Draft not started"}
             </div>
           </aside>
@@ -585,6 +883,25 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       <Label className="text-xs">{label}</Label>
       {children}
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function SectionTitle({
+  icon: Icon,
+  label,
+  sub,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  sub?: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 text-primary" /> {label}
+      </div>
+      {sub && <p className="mt-1 text-[12px] text-muted-foreground">{sub}</p>}
     </div>
   );
 }
