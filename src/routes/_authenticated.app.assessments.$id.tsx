@@ -84,6 +84,11 @@ function AssessmentOverview() {
             <div className="mt-3 h-1.5 bg-secondary rounded-sm overflow-hidden">
               <div className="h-full bg-primary" style={{ width: `${overall ?? 0}%` }} />
             </div>
+            <p className="mt-3 text-[11px] text-muted-foreground leading-snug">
+              {overall == null
+                ? "Awaiting readiness assessment — the transformation profile sets the lens, not the score."
+                : "Weighted across the CORE7 pillars from completed readiness assessment."}
+            </p>
           </div>
           <KpiBlock label="Confidence index" value={confAvg ? `${confAvg}` : "—"} sub={confAvg > 80 ? "High" : confAvg > 60 ? "Moderate" : "Low"} />
           <KpiBlock label="Open risks" value={String(risks.filter((r: any) => r.severity === "high" || r.severity === "critical").length)} sub={`${risks.length} total`} />
