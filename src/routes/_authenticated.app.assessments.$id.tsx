@@ -3,12 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
-import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2 } from "lucide-react";
+import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2, Sparkles, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
   component: AssessmentOverview,
 });
+
+// Parse the compact profile summary persisted by the profiling flow, e.g.
+// "Technology & Data (38%)" → { lead, weight }. Falls back gracefully.
+function parseProfile(s?: string | null) {
+  if (!s) return { lead: null as string | null, weight: null as number | null };
+  const m = s.match(/^(.*?)\s*\((\d+)%\)\s*$/);
+  if (m) return { lead: m[1].trim(), weight: Number(m[2]) };
+  return { lead: s, weight: null as number | null };
+}
 
 function AssessmentOverview() {
   const { id } = Route.useParams();
@@ -41,6 +50,13 @@ function AssessmentOverview() {
 
   const statusTone = a.status === "complete" ? "success" : a.status === "in_review" ? "warning" : "info";
 
+  const profile = parseProfile(a.transformation_profile);
+  const topPillars = [...p]
+    .sort((x: any, y: any) => Number(y.default_weight ?? 0) - Number(x.default_weight ?? 0))
+    .slice(0, 3);
+  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => Number(x.default_weight ?? 0)));
+  const complexityLabel = a.complexity_level ?? "—";
+
   return (
     <>
       <PageHeader
@@ -68,6 +84,11 @@ function AssessmentOverview() {
             <div className="mt-3 h-1.5 bg-secondary rounded-sm overflow-hidden">
               <div className="h-full bg-primary" style={{ width: `${overall ?? 0}%` }} />
             </div>
+            <p className="mt-3 text-[11px] text-muted-foreground leading-snug">
+              {overall == null
+                ? "Awaiting readiness assessment — the transformation profile sets the lens, not the score."
+                : "Weighted across the CORE7 pillars from completed readiness assessment."}
+            </p>
           </div>
           <KpiBlock label="Confidence index" value={confAvg ? `${confAvg}` : "—"} sub={confAvg > 80 ? "High" : confAvg > 60 ? "Moderate" : "Low"} />
           <KpiBlock label="Open risks" value={String(risks.filter((r: any) => r.severity === "high" || r.severity === "critical").length)} sub={`${risks.length} total`} />
@@ -82,6 +103,59 @@ function AssessmentOverview() {
 
       <div className="px-8 py-6 max-w-[1400px] grid lg:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-8 min-w-0">
+          <section className="border border-border rounded-sm bg-card p-5">
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="font-semibold tracking-tight text-sm" style={{ color: "var(--navy)" }}>Transformation profile</h2>
+              </div>
+              <StatusChip
+                label={`Profile maturity · ${complexityLabel}`}
+                tone={complexityLabel === "High" ? "warning" : complexityLabel === "Low" ? "muted" : "info"}
+              />
+            </div>
+
+            <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-5">
+              <div className="space-y-3">
+                <div>
+                  <div className="eyebrow">Lead lens</div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-medium" style={{ color: "var(--navy)" }}>{profile.lead ?? "—"}</span>
+                    {profile.weight != null && (
+                      <span className="font-mono text-xs text-muted-foreground">{profile.weight}%</span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><div className="eyebrow">Scope</div><div className="text-sm font-medium mt-1">{a.scope_level ?? "—"}</div></div>
+                  <div><div className="eyebrow">Intensity</div><div className="text-sm font-medium mt-1">{complexityLabel}</div></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> Top weighted CORE7 pillars</div>
+                <ul className="mt-2 space-y-2">
+                  {topPillars.map((pillar: any) => (
+                    <li key={pillar.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[12px] truncate">{pillar.name}</div>
+                        <div className="mt-1 h-1.5 bg-secondary rounded-sm overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${(Number(pillar.default_weight ?? 0) / maxPillarWeight) * 100}%` }} />
+                        </div>
+                      </div>
+                      <span className="font-mono text-[11px] text-muted-foreground">{pillar.default_weight}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <p className="mt-4 pt-3 border-t border-border text-[11px] text-muted-foreground leading-snug">
+              This dynamic weighting profile tailors the later readiness assessment by directing analytical
+              weight toward the most implicated lenses. It is not itself a readiness result.
+            </p>
+          </section>
+
           <section>
             <h2 className="font-semibold tracking-tight mb-3" style={{ color: "var(--navy)" }}>CORE7 pillars</h2>
             <div className="grid sm:grid-cols-2 gap-3">
