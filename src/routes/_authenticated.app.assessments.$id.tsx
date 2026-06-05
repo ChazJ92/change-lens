@@ -3,12 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
-import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2 } from "lucide-react";
+import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2, Sparkles, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/$id")({
   component: AssessmentOverview,
 });
+
+// Parse the compact profile summary persisted by the profiling flow, e.g.
+// "Technology & Data (38%)" → { lead, weight }. Falls back gracefully.
+function parseProfile(s?: string | null) {
+  if (!s) return { lead: null as string | null, weight: null as number | null };
+  const m = s.match(/^(.*?)\s*\((\d+)%\)\s*$/);
+  if (m) return { lead: m[1].trim(), weight: Number(m[2]) };
+  return { lead: s, weight: null as number | null };
+}
 
 function AssessmentOverview() {
   const { id } = Route.useParams();
