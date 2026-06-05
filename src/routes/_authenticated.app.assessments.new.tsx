@@ -331,13 +331,18 @@ function NewAssessment() {
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("No organisation");
+      const top = profile.sorted[0];
+      const avg = profile.topDrivers.length
+        ? Math.round(profile.topDrivers.reduce((s, d) => s + d.score, 0) / profile.topDrivers.length)
+        : 0;
+      const complexity = avg >= 67 ? "High" : avg >= 34 ? "Medium" : "Low";
       const a = repo.assessments.create({
         organisation_id: orgId,
         name: form.title,
         description: form.description || null,
-        transformation_profile: emerging[0]?.name ?? "Digital",
-        scope_level: "Business unit",
-        complexity_level: "Medium",
+        transformation_profile: top ? `${top.name} (${top.weight}%)` : "Balanced",
+        scope_level: answers["q2"] || "Business unit",
+        complexity_level: complexity,
         business_area: "Operations",
         target_completion_date: null,
         status: "active",
