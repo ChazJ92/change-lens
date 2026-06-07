@@ -199,16 +199,15 @@ function computeProfile(answers: Record<string, string>) {
     return { code: p.code, name: p.name, importance, weight: 0, confidence, answered: done.length, total: contrib.length };
   });
 
-  const totalImp = pillars.reduce((s, p) => s + p.importance, 0) || 1;
-  pillars.forEach((p) => (p.weight = Math.round((p.importance / totalImp) * 100)));
-  // reconcile rounding so weights total exactly 100%
-  const drift = 100 - pillars.reduce((s, p) => s + p.weight, 0);
-  if (drift !== 0) {
-    const top = [...pillars].sort((a, b) => b.weight - a.weight)[0];
-    if (top) top.weight += drift;
-  }
+  // Every new assessment starts with EQUAL pillar weights — no pillar is
+  // favoured at creation time. The survey still produces importance scores and
+  // drivers as analytical insight, but those no longer skew the starting
+  // weighting. Equal weights sum to exactly 100% in weighting maths.
+  pillars.forEach((p) => (p.weight = EQUAL_PILLAR_WEIGHT));
 
-  const sorted = [...pillars].sort((a, b) => b.weight - a.weight);
+  // `sorted` ranks by importance to surface the most-implicated lens for
+  // context labelling only — it does not change the (equal) starting weights.
+  const sorted = [...pillars].sort((a, b) => b.importance - a.importance);
   const topDrivers = drivers.filter((d) => d.answered).sort((a, b) => b.score - a.score);
   return { drivers, pillars, sorted, topDrivers };
 }
