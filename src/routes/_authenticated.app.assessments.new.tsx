@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
 });
 
-// CORE7 pillars — used to render the emerging weighting profile in the rail.
+// CORE7 pillars — used for signal detection and the equal starting-weights rail.
 const PILLARS = [
   { code: "SAL", name: "Strategic Alignment & Leadership", base: 20, kw: ["strategy", "vision", "ambition", "roadmap", "leadership", "sponsor", "board", "decision", "alignment"] },
   { code: "DQI", name: "Data Quality & Insight", base: 7, kw: ["data", "insight", "analytics", "reporting", "measurement", "metrics", "evidence", "quality"] },
@@ -665,7 +665,7 @@ function NewAssessment() {
 
                 {/* Top active drivers */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this weighting" />
+                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this profile" />
                   <div className="mt-4 flex flex-wrap gap-2">
                     {profile.topDrivers.slice(0, 6).map((d) => (
                       <span key={d.q} className="inline-flex items-center gap-2 rounded-sm border border-border bg-secondary px-2.5 py-1 text-[12px]">
