@@ -143,17 +143,17 @@ function AssessmentOverview() {
               </div>
 
               <div>
-                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> Top weighted CORE7 pillars</div>
+                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> CORE7 weighting</div>
                 <ul className="mt-2 space-y-2">
                   {topPillars.map((pillar: any) => (
                     <li key={pillar.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
                       <div className="min-w-0">
                         <div className="text-[12px] truncate">{pillar.name}</div>
                         <div className="mt-1 h-1.5 bg-secondary rounded-sm overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${(Number(pillar.default_weight ?? 0) / maxPillarWeight) * 100}%` }} />
+                          <div className="h-full bg-primary" style={{ width: `${(pillar.eff / maxPillarWeight) * 100}%` }} />
                         </div>
                       </div>
-                      <span className="font-mono text-[11px] text-muted-foreground">{pillar.default_weight}%</span>
+                      <span className="font-mono text-[11px] text-muted-foreground">{formatWeightPct(pillar.eff)}%</span>
                     </li>
                   ))}
                 </ul>
@@ -161,8 +161,8 @@ function AssessmentOverview() {
             </div>
 
             <p className="mt-4 pt-3 border-t border-border text-[11px] text-muted-foreground leading-snug">
-              This dynamic weighting profile tailors the later readiness assessment by directing analytical
-              weight toward the most implicated lenses. It is not itself a readiness result.
+              New assessments start with equal CORE7 weighting, so no pillar is favoured at creation. Weights
+              can be tailored per pillar in the readiness workspace. This is not itself a readiness result.
             </p>
           </section>
 
