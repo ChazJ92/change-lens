@@ -386,7 +386,7 @@ function NewAssessment() {
       <PageHeader
         eyebrow="Transformation intelligence"
         title="Create Transformation Profile"
-        description="Describe the proposed change. ChangeLens reads its characteristics to generate a dynamic CORE7 weighting profile — the lens that will later tailor your readiness assessment."
+        description="Describe the proposed change and profile its characteristics. Every new profile starts from equal CORE7 weighting — no pillar is favoured at creation, and weights can be tailored later in the readiness workspace."
       />
 
       <div className="px-8 py-8">
