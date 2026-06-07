@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
-import { pillarLabel } from "@/lib/pillars";
+import { pillarLabel, formatWeightPct } from "@/lib/pillars";
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2, Sparkles, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +40,14 @@ function AssessmentOverview() {
   if (isLoading || !data?.a) return <div className="p-8 text-sm text-muted-foreground">Loading assessment…</div>;
 
   const { a, pa, p, risks, recs, act } = data;
+  // Effective pillar weight = assessment-level override when set, otherwise the
+  // global seeded default. New assessments persist equal weights as overrides,
+  // while existing assessments keep their original weighting.
+  const effWeight = (pillarId: string) => {
+    const row = pa.find((x: any) => x.pillar_id === pillarId);
+    const pp = p.find((x: any) => x.id === pillarId);
+    return Number(row?.weight_override ?? pp?.default_weight ?? 0);
+  };
   const scoreRows = pa.map((row: any) => {
     const pp = p.find((x: any) => x.id === row.pillar_id);
     return { score: row.final_score ?? row.provisional_score, weight: Number(pp?.default_weight ?? 0), weight_override: row.weight_override };
@@ -53,9 +61,10 @@ function AssessmentOverview() {
 
   const profile = parseProfile(a.transformation_profile);
   const topPillars = [...p]
-    .sort((x: any, y: any) => Number(y.default_weight ?? 0) - Number(x.default_weight ?? 0))
+    .map((x: any) => ({ ...x, eff: effWeight(x.id) }))
+    .sort((x: any, y: any) => y.eff - x.eff)
     .slice(0, 3);
-  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => Number(x.default_weight ?? 0)));
+  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => x.eff));
   const complexityLabel = a.complexity_level ?? "—";
 
   return (
@@ -119,7 +128,7 @@ function AssessmentOverview() {
             <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-5">
               <div className="space-y-3">
                 <div>
-                  <div className="eyebrow">Lead lens</div>
+                  <div className="eyebrow">Primary focus</div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="font-medium" style={{ color: "var(--navy)" }}>{profile.lead ?? "—"}</span>
                     {profile.weight != null && (
@@ -134,17 +143,17 @@ function AssessmentOverview() {
               </div>
 
               <div>
-                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> Top weighted CORE7 pillars</div>
+                <div className="eyebrow flex items-center gap-1.5"><Layers3 className="h-3 w-3" /> CORE7 weighting</div>
                 <ul className="mt-2 space-y-2">
                   {topPillars.map((pillar: any) => (
                     <li key={pillar.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
                       <div className="min-w-0">
                         <div className="text-[12px] truncate">{pillar.name}</div>
                         <div className="mt-1 h-1.5 bg-secondary rounded-sm overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${(Number(pillar.default_weight ?? 0) / maxPillarWeight) * 100}%` }} />
+                          <div className="h-full bg-primary" style={{ width: `${(pillar.eff / maxPillarWeight) * 100}%` }} />
                         </div>
                       </div>
-                      <span className="font-mono text-[11px] text-muted-foreground">{pillar.default_weight}%</span>
+                      <span className="font-mono text-[11px] text-muted-foreground">{formatWeightPct(pillar.eff)}%</span>
                     </li>
                   ))}
                 </ul>
@@ -152,8 +161,8 @@ function AssessmentOverview() {
             </div>
 
             <p className="mt-4 pt-3 border-t border-border text-[11px] text-muted-foreground leading-snug">
-              This dynamic weighting profile tailors the later readiness assessment by directing analytical
-              weight toward the most implicated lenses. It is not itself a readiness result.
+              New assessments start with equal CORE7 weighting, so no pillar is favoured at creation. Weights
+              can be tailored per pillar in the readiness workspace. This is not itself a readiness result.
             </p>
           </section>
 
@@ -169,7 +178,7 @@ function AssessmentOverview() {
                   <Link key={pillar.id} to="/app/assessments/$id/pillars/$pillarId" params={{ id, pillarId: pillar.id }} className="block border border-border rounded-sm bg-card p-4 hover:border-primary transition-colors group">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="eyebrow">Pillar {pillar.display_order} · weight {pillar.default_weight}%</div>
+                        <div className="eyebrow">Pillar {pillar.display_order} · weight {formatWeightPct(effWeight(pillar.id))}%</div>
                         <div className="font-medium mt-1">{pillar.name}</div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />

@@ -12,13 +12,13 @@ import { LensMark } from "@/components/brand";
 import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, Sparkles, Radar, Save, CheckCircle2, Check, ListChecks, Gauge, Layers3, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pillarCompactLabel } from "@/lib/pillars";
+import { pillarCompactLabel, EQUAL_PILLAR_WEIGHT, formatWeightPct } from "@/lib/pillars";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
 });
 
-// CORE7 pillars — used to render the emerging weighting profile in the rail.
+// CORE7 pillars — used for signal detection and the equal starting-weights rail.
 const PILLARS = [
   { code: "SAL", name: "Strategic Alignment & Leadership", base: 20, kw: ["strategy", "vision", "ambition", "roadmap", "leadership", "sponsor", "board", "decision", "alignment"] },
   { code: "DQI", name: "Data Quality & Insight", base: 7, kw: ["data", "insight", "analytics", "reporting", "measurement", "metrics", "evidence", "quality"] },
@@ -32,7 +32,7 @@ const PILLARS = [
 const STAGES = [
   { key: "context", label: "Change context", hint: "What is changing and why" },
   { key: "survey", label: "Profiling survey", hint: "23 characteristic signals" },
-  { key: "profile", label: "CORE7 weighting", hint: "Generated profile" },
+  { key: "profile", label: "CORE7 weighting", hint: "Equal starting weights" },
 ];
 
 // ---- Profiling survey definition --------------------------------------------
@@ -199,16 +199,15 @@ function computeProfile(answers: Record<string, string>) {
     return { code: p.code, name: p.name, importance, weight: 0, confidence, answered: done.length, total: contrib.length };
   });
 
-  const totalImp = pillars.reduce((s, p) => s + p.importance, 0) || 1;
-  pillars.forEach((p) => (p.weight = Math.round((p.importance / totalImp) * 100)));
-  // reconcile rounding so weights total exactly 100%
-  const drift = 100 - pillars.reduce((s, p) => s + p.weight, 0);
-  if (drift !== 0) {
-    const top = [...pillars].sort((a, b) => b.weight - a.weight)[0];
-    if (top) top.weight += drift;
-  }
+  // Every new assessment starts with EQUAL pillar weights — no pillar is
+  // favoured at creation time. The survey still produces importance scores and
+  // drivers as analytical insight, but those no longer skew the starting
+  // weighting. Equal weights sum to exactly 100% in weighting maths.
+  pillars.forEach((p) => (p.weight = EQUAL_PILLAR_WEIGHT));
 
-  const sorted = [...pillars].sort((a, b) => b.weight - a.weight);
+  // `sorted` ranks by importance to surface the most-implicated lens for
+  // context labelling only — it does not change the (equal) starting weights.
+  const sorted = [...pillars].sort((a, b) => b.importance - a.importance);
   const topDrivers = drivers.filter((d) => d.answered).sort((a, b) => b.score - a.score);
   return { drivers, pillars, sorted, topDrivers };
 }
@@ -341,7 +340,10 @@ function NewAssessment() {
         organisation_id: orgId,
         name: form.title,
         description: form.description || null,
-        transformation_profile: top ? `${top.name} (${top.weight}%)` : "Balanced",
+        // New assessments start with equal CORE7 weighting. We persist only the
+        // most-implicated lens as a focus label (no weight %) so the overview
+        // never implies a fixed unequal default weighting.
+        transformation_profile: top ? top.name : "Balanced",
         scope_level: answers["q2"] || "Business unit",
         complexity_level: complexity,
         business_area: "Operations",
@@ -350,8 +352,16 @@ function NewAssessment() {
         created_by: user!.id,
       });
 
+      // Apply equal starting weights at the assessment level via weight_override
+      // so global seeded pillar defaults are not inherited. These remain fully
+      // overridable later in the readiness workspace.
       for (const p of repo.pillars.list()) {
-        repo.pillarAssessments.create({ assessment_id: a.id, pillar_id: p.id, status: "not_started" });
+        repo.pillarAssessments.create({
+          assessment_id: a.id,
+          pillar_id: p.id,
+          status: "not_started",
+          weight_override: EQUAL_PILLAR_WEIGHT,
+        });
       }
       repo.activity.log({
         organisation_id: orgId,
@@ -376,7 +386,7 @@ function NewAssessment() {
       <PageHeader
         eyebrow="Transformation intelligence"
         title="Create Transformation Profile"
-        description="Describe the proposed change. ChangeLens reads its characteristics to generate a dynamic CORE7 weighting profile — the lens that will later tailor your readiness assessment."
+        description="Describe the proposed change and profile its characteristics. Every new profile starts from equal CORE7 weighting — no pillar is favoured at creation, and weights can be tailored later in the readiness workspace."
       />
 
       <div className="px-8 py-8">
@@ -578,17 +588,18 @@ function NewAssessment() {
                     {form.title || "Transformation profile"}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-                    A dynamic CORE7 weighting derived from your 23 characteristic signals. Review it below,
-                    then confirm to create the profile and open its readiness workspace.
+                    Your change characteristics across the 23 signals. Every new profile starts with
+                    equal CORE7 weighting — review the signals below, then create the profile and tailor
+                    weights later in the readiness workspace.
                   </p>
                 </div>
 
-                {/* Dynamic CORE7 Weighting Profile */}
+                {/* CORE7 starting weights (equal) */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={Layers3} label="Dynamic CORE7 weighting profile" sub="Where readiness effort should concentrate · totals 100%" />
+                  <SectionTitle icon={Layers3} label="CORE7 starting weights" sub="Equal across all seven pillars at creation · totals 100% · customisable later" />
                   <div className="mt-4 flex flex-col-reverse lg:flex-row lg:items-center gap-6">
                     <ul className="flex-1 space-y-2.5 min-w-0">
-                      {profile.sorted.map((p, i) => (
+                      {profile.pillars.map((p, i) => (
                         <li key={p.code} className="grid grid-cols-[20px_120px_1fr_44px] items-center gap-3">
                           <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                           <span className="text-[12px] text-foreground truncate">{p.name}</span>
@@ -598,14 +609,14 @@ function NewAssessment() {
                               style={{ width: `${(p.weight / maxWeight) * 100}%` }}
                             />
                           </span>
-                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{p.weight}%</span>
+                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{formatWeightPct(p.weight)}%</span>
                         </li>
                       ))}
                     </ul>
                     <div className="flex items-center gap-3 lg:flex-col lg:items-center shrink-0">
                       <LensMark size={84} />
                       <div className="text-center">
-                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Lead lens</div>
+                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Primary focus</div>
                         <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>{profile.sorted[0]?.name}</div>
                       </div>
                     </div>
@@ -614,7 +625,7 @@ function NewAssessment() {
 
                 {/* CORE7 Pillar Importance Scores + Confidence */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100), with profiling confidence" />
+                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100). Starting weight is equal across all pillars and can be tailored later." />
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full text-[12px]">
                       <thead>
@@ -642,7 +653,7 @@ function NewAssessment() {
                                   <span className="font-mono text-muted-foreground">{p.importance}</span>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 font-mono" style={{ color: "var(--ink)" }}>{p.weight}%</td>
+                              <td className="py-2.5 px-3 font-mono" style={{ color: "var(--ink)" }}>{formatWeightPct(p.weight)}%</td>
                               <td className={cn("py-2.5 pl-3", c.tone)}>{c.label}</td>
                             </tr>
                           );
@@ -654,7 +665,7 @@ function NewAssessment() {
 
                 {/* Top active drivers */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this weighting" />
+                  <SectionTitle icon={TrendingUp} label="Top active drivers" sub="The strongest characteristic signals shaping this profile" />
                   <div className="mt-4 flex flex-wrap gap-2">
                     {profile.topDrivers.slice(0, 6).map((d) => (
                       <span key={d.q} className="inline-flex items-center gap-2 rounded-sm border border-border bg-secondary px-2.5 py-1 text-[12px]">
@@ -694,9 +705,9 @@ function NewAssessment() {
                         Confidence rating · <span className={overallConfidence.tone}>{overallConfidence.label}</span>
                       </div>
                       <p className="mt-1 text-[12px] text-muted-foreground max-w-2xl">
-                        This profile <span className="text-foreground">shapes</span> the later readiness assessment by directing
-                        analytical weight towards the lenses most implicated in the change. It does not itself measure readiness —
-                        it calibrates how readiness will be assessed.
+                        This profile highlights <span className="text-foreground">where the change is most implicated</span>. New
+                        assessments start with equal CORE7 weighting so no pillar is favoured at creation — you can tailor the
+                        weighting later in the readiness workspace. It does not itself measure readiness.
                       </p>
                     </div>
                   </div>
@@ -721,7 +732,7 @@ function NewAssessment() {
 
             {stage === "context" && (
               <p className="text-[11px] text-muted-foreground border-l-2 border-primary pl-3 max-w-2xl">
-                Next, a short profiling survey (23 characteristic signals) refines the CORE7 weighting shown on the right. The readiness assessment itself comes afterwards, tailored to this profile.
+                Next, a short profiling survey (23 characteristic signals) captures the change characteristics. New profiles start with equal CORE7 weighting shown on the right, which you can tailor later. The readiness assessment itself comes afterwards.
               </p>
             )}
           </div>
@@ -777,53 +788,29 @@ function NewAssessment() {
                 </div>
               )}
 
-              {/* Emerging CORE7 profile */}
+              {/* CORE7 starting weights — equal at creation */}
               <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-3 mb-3">
                   <LensMark size={36} />
                   <div>
-                    <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>Emerging CORE7 profile</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {stage === "context" ? "Live weighting preview" : stage === "survey" ? "Refines as you profile" : "Generated weighting"}
-                    </div>
+                    <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>CORE7 starting weights</div>
+                    <div className="text-[11px] text-muted-foreground">Equal at creation · customise later</div>
                   </div>
                 </div>
-                {stage === "context" ? (
-                  <ul className="space-y-2">
-                    {emerging.map((p) => (
-                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
-                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <span
-                            className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
-                            style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
-                          />
-                        </span>
-                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <ul className="space-y-2">
-                    {profile.sorted.map((p) => (
-                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
-                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <span
-                            className="block h-full bg-primary transition-all duration-500"
-                            style={{ width: `${(p.weight / maxWeight) * 100}%` }}
-                          />
-                        </span>
-                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {stage === "survey" && (
-                  <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
-                    Provisional — confidence {overallConfidence.label.replace("Provisional · ", "").toLowerCase()} until all 23 signals are profiled.
-                  </p>
-                )}
+                <ul className="space-y-2">
+                  {PILLARS.map((p) => (
+                    <li key={p.code} className="grid grid-cols-[34px_1fr_44px] items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
+                      <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <span className="block h-full bg-primary transition-all duration-500" style={{ width: "100%" }} />
+                      </span>
+                      <span className="font-mono text-[10px] text-right text-muted-foreground">{formatWeightPct(EQUAL_PILLAR_WEIGHT)}%</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
+                  No pillar is favoured at creation — weights total 100% and can be tailored in the readiness workspace.
+                </p>
               </div>
 
               {/* Active signals */}
