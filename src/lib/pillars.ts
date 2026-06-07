@@ -184,3 +184,23 @@ export function pillarCompactLabel(key?: string | null): string {
   if (p) return p.abbr;
   return COMPACT_LABELS[key] ?? key;
 }
+
+/** Number of CORE7 pillars. */
+export const PILLAR_COUNT = CORE7_PILLARS.length;
+
+/**
+ * Equal starting weight applied to every pillar of a newly created assessment.
+ * Stored per assessment (not on the global pillar table) so no pillar is
+ * favoured at creation time. 100 / 7 ≈ 14.2857, and the seven values sum to
+ * exactly 100 in weighting maths.
+ */
+export const EQUAL_PILLAR_WEIGHT = 100 / PILLAR_COUNT;
+
+/**
+ * Format a weight percentage for display, trimming to at most two decimals
+ * (e.g. 14.2857 → "14.29", 20 → "20") so the UI stays clean.
+ */
+export function formatWeightPct(w?: number | null): string {
+  if (w == null) return "0";
+  return String(Math.round(Number(w) * 100) / 100);
+}
