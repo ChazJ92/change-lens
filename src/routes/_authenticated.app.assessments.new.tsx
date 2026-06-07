@@ -12,6 +12,7 @@ import { LensMark } from "@/components/brand";
 import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, Sparkles, Radar, Save, CheckCircle2, Check, ListChecks, Gauge, Layers3, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pillarCompactLabel } from "@/lib/pillars";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
@@ -630,7 +631,7 @@ function NewAssessment() {
                           return (
                             <tr key={p.code} className="border-b border-border/50 last:border-0">
                               <td className="py-2.5 pr-3">
-                                <span className="font-mono text-[10px] text-muted-foreground mr-2">{p.code}</span>
+                                <span className="font-mono text-[10px] text-muted-foreground mr-2">{pillarCompactLabel(p.code)}</span>
                                 <span className="text-foreground">{p.name}</span>
                               </td>
                               <td className="py-2.5 px-3">
@@ -672,7 +673,7 @@ function NewAssessment() {
                     {profile.drivers.map((d) => (
                       <div key={d.q} className="grid grid-cols-[1fr_60px_28px] items-center gap-2">
                         <span className="text-[12px] text-foreground truncate">
-                          <span className="font-mono text-[9px] text-muted-foreground mr-1.5">{d.topPillar}</span>
+                          <span className="font-mono text-[9px] text-muted-foreground mr-1.5">{pillarCompactLabel(d.topPillar)}</span>
                           {d.name}
                         </span>
                         <span className="h-1 rounded-full bg-secondary overflow-hidden">
@@ -791,7 +792,7 @@ function NewAssessment() {
                   <ul className="space-y-2">
                     {emerging.map((p) => (
                       <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
                         <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
                           <span
                             className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
@@ -806,7 +807,7 @@ function NewAssessment() {
                   <ul className="space-y-2">
                     {profile.sorted.map((p) => (
                       <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{p.code}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
                         <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
                           <span
                             className="block h-full bg-primary transition-all duration-500"

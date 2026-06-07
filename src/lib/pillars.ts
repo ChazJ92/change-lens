@@ -8,7 +8,7 @@
  * Never display the raw stable `code` or any legacy abbreviation
  * (STR, GOV, TEC, OPM, PPL, CUS, RSK) in the UI.
  */
-export type PillarAbbr = "SAL" | "DQI" | "PRM" | "TAT" | "PAC" | "GAR" | "OAD";
+export type PillarAbbr = "Strat" | "Data" | "Process" | "Tech" | "People" | "Govern" | "Adapt";
 
 export interface CanonicalPillar {
   /** Stable snake_case code aligned with the database `pillars.code`. */
@@ -26,7 +26,7 @@ export interface CanonicalPillar {
 export const CORE7_PILLARS: CanonicalPillar[] = [
   {
     code: "strategy_leadership",
-    abbr: "SAL",
+    abbr: "Strat",
     name: "Strategic Alignment & Leadership",
     default_weight: 20,
     display_order: 1,
@@ -42,7 +42,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "data_quality_insight",
-    abbr: "DQI",
+    abbr: "Data",
     name: "Data Quality & Insight",
     default_weight: 7,
     display_order: 2,
@@ -58,7 +58,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "process_maturity",
-    abbr: "PRM",
+    abbr: "Process",
     name: "Process Maturity",
     default_weight: 12,
     display_order: 3,
@@ -74,7 +74,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "technology_tooling",
-    abbr: "TAT",
+    abbr: "Tech",
     name: "Technology & Tooling",
     default_weight: 15,
     display_order: 4,
@@ -90,7 +90,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "people_capability",
-    abbr: "PAC",
+    abbr: "People",
     name: "People & Capability",
     default_weight: 18,
     display_order: 5,
@@ -106,7 +106,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "governance_risk",
-    abbr: "GAR",
+    abbr: "Govern",
     name: "Governance & Risk",
     default_weight: 10,
     display_order: 6,
@@ -122,7 +122,7 @@ export const CORE7_PILLARS: CanonicalPillar[] = [
   },
   {
     code: "organisational_adaptability",
-    abbr: "OAD",
+    abbr: "Adapt",
     name: "Organisational Adaptability",
     default_weight: 18,
     display_order: 7,
@@ -164,4 +164,23 @@ export function pillarLabel(key?: string | null, fallbackName?: string | null): 
 /** Approved abbreviation for compact UI only. */
 export function pillarAbbr(key?: string | null): string {
   return resolvePillar(key)?.abbr ?? "";
+}
+
+/** Fallback mapping for legacy abbreviation codes used in the profiling survey. */
+const COMPACT_LABELS: Record<string, string> = {
+  SAL: "Strat",
+  DQI: "Data",
+  PRM: "Process",
+  TAT: "Tech",
+  PAC: "People",
+  GAR: "Govern",
+  OAD: "Adapt",
+};
+
+/** Compact label for user-facing abbreviations. Handles both canonical pillar codes and legacy survey codes. */
+export function pillarCompactLabel(key?: string | null): string {
+  if (!key) return "";
+  const p = resolvePillar(key);
+  if (p) return p.abbr;
+  return COMPACT_LABELS[key] ?? key;
 }
