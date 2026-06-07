@@ -588,17 +588,18 @@ function NewAssessment() {
                     {form.title || "Transformation profile"}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-                    A dynamic CORE7 weighting derived from your 23 characteristic signals. Review it below,
-                    then confirm to create the profile and open its readiness workspace.
+                    Your change characteristics across the 23 signals. Every new profile starts with
+                    equal CORE7 weighting — review the signals below, then create the profile and tailor
+                    weights later in the readiness workspace.
                   </p>
                 </div>
 
-                {/* Dynamic CORE7 Weighting Profile */}
+                {/* CORE7 starting weights (equal) */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={Layers3} label="Dynamic CORE7 weighting profile" sub="Where readiness effort should concentrate · totals 100%" />
+                  <SectionTitle icon={Layers3} label="CORE7 starting weights" sub="Equal across all seven pillars at creation · totals 100% · customisable later" />
                   <div className="mt-4 flex flex-col-reverse lg:flex-row lg:items-center gap-6">
                     <ul className="flex-1 space-y-2.5 min-w-0">
-                      {profile.sorted.map((p, i) => (
+                      {profile.pillars.map((p, i) => (
                         <li key={p.code} className="grid grid-cols-[20px_120px_1fr_44px] items-center gap-3">
                           <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                           <span className="text-[12px] text-foreground truncate">{p.name}</span>
@@ -608,14 +609,14 @@ function NewAssessment() {
                               style={{ width: `${(p.weight / maxWeight) * 100}%` }}
                             />
                           </span>
-                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{p.weight}%</span>
+                          <span className="font-mono text-[12px] text-right font-medium" style={{ color: "var(--ink)" }}>{formatWeightPct(p.weight)}%</span>
                         </li>
                       ))}
                     </ul>
                     <div className="flex items-center gap-3 lg:flex-col lg:items-center shrink-0">
                       <LensMark size={84} />
                       <div className="text-center">
-                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Lead lens</div>
+                        <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">Primary focus</div>
                         <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>{profile.sorted[0]?.name}</div>
                       </div>
                     </div>
