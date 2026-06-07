@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { mockRepositories as repo } from "@/lib/mock";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { weightedOverall, readinessBand, mapScore, fmtDate, fmtRelative, PILLAR_STATUS_LABELS, ASSESSMENT_STATUS_LABELS, confidenceFromLabel } from "@/lib/scoring";
-import { pillarLabel } from "@/lib/pillars";
+import { pillarLabel, formatWeightPct } from "@/lib/pillars";
 import { ArrowRight, AlertTriangle, Lightbulb, FileWarning, Printer, FileBarChart2, Sparkles, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +40,14 @@ function AssessmentOverview() {
   if (isLoading || !data?.a) return <div className="p-8 text-sm text-muted-foreground">Loading assessment…</div>;
 
   const { a, pa, p, risks, recs, act } = data;
+  // Effective pillar weight = assessment-level override when set, otherwise the
+  // global seeded default. New assessments persist equal weights as overrides,
+  // while existing assessments keep their original weighting.
+  const effWeight = (pillarId: string) => {
+    const row = pa.find((x: any) => x.pillar_id === pillarId);
+    const pp = p.find((x: any) => x.id === pillarId);
+    return Number(row?.weight_override ?? pp?.default_weight ?? 0);
+  };
   const scoreRows = pa.map((row: any) => {
     const pp = p.find((x: any) => x.id === row.pillar_id);
     return { score: row.final_score ?? row.provisional_score, weight: Number(pp?.default_weight ?? 0), weight_override: row.weight_override };
@@ -53,9 +61,10 @@ function AssessmentOverview() {
 
   const profile = parseProfile(a.transformation_profile);
   const topPillars = [...p]
-    .sort((x: any, y: any) => Number(y.default_weight ?? 0) - Number(x.default_weight ?? 0))
+    .map((x: any) => ({ ...x, eff: effWeight(x.id) }))
+    .sort((x: any, y: any) => y.eff - x.eff)
     .slice(0, 3);
-  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => Number(x.default_weight ?? 0)));
+  const maxPillarWeight = Math.max(1, ...topPillars.map((x: any) => x.eff));
   const complexityLabel = a.complexity_level ?? "—";
 
   return (
