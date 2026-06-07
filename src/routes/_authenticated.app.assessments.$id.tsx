@@ -128,7 +128,7 @@ function AssessmentOverview() {
             <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-5">
               <div className="space-y-3">
                 <div>
-                  <div className="eyebrow">Lead lens</div>
+                  <div className="eyebrow">Primary focus</div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="font-medium" style={{ color: "var(--navy)" }}>{profile.lead ?? "—"}</span>
                     {profile.weight != null && (
