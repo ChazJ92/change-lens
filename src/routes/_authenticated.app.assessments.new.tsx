@@ -705,9 +705,9 @@ function NewAssessment() {
                         Confidence rating · <span className={overallConfidence.tone}>{overallConfidence.label}</span>
                       </div>
                       <p className="mt-1 text-[12px] text-muted-foreground max-w-2xl">
-                        This profile <span className="text-foreground">shapes</span> the later readiness assessment by directing
-                        analytical weight towards the lenses most implicated in the change. It does not itself measure readiness —
-                        it calibrates how readiness will be assessed.
+                        This profile highlights <span className="text-foreground">where the change is most implicated</span>. New
+                        assessments start with equal CORE7 weighting so no pillar is favoured at creation — you can tailor the
+                        weighting later in the readiness workspace. It does not itself measure readiness.
                       </p>
                     </div>
                   </div>
@@ -732,7 +732,7 @@ function NewAssessment() {
 
             {stage === "context" && (
               <p className="text-[11px] text-muted-foreground border-l-2 border-primary pl-3 max-w-2xl">
-                Next, a short profiling survey (23 characteristic signals) refines the CORE7 weighting shown on the right. The readiness assessment itself comes afterwards, tailored to this profile.
+                Next, a short profiling survey (23 characteristic signals) captures the change characteristics. New profiles start with equal CORE7 weighting shown on the right, which you can tailor later. The readiness assessment itself comes afterwards.
               </p>
             )}
           </div>
