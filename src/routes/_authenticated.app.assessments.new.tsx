@@ -12,7 +12,7 @@ import { LensMark } from "@/components/brand";
 import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, Sparkles, Radar, Save, CheckCircle2, Check, ListChecks, Gauge, Layers3, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pillarCompactLabel } from "@/lib/pillars";
+import { pillarCompactLabel, EQUAL_PILLAR_WEIGHT, formatWeightPct } from "@/lib/pillars";
 
 export const Route = createFileRoute("/_authenticated/app/assessments/new")({
   component: NewAssessment,
@@ -32,7 +32,7 @@ const PILLARS = [
 const STAGES = [
   { key: "context", label: "Change context", hint: "What is changing and why" },
   { key: "survey", label: "Profiling survey", hint: "23 characteristic signals" },
-  { key: "profile", label: "CORE7 weighting", hint: "Generated profile" },
+  { key: "profile", label: "CORE7 weighting", hint: "Equal starting weights" },
 ];
 
 // ---- Profiling survey definition --------------------------------------------
