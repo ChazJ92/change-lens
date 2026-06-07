@@ -654,6 +654,7 @@ function NewAssessment() {
                                 </div>
                               </td>
                               <td className="py-2.5 px-3 font-mono" style={{ color: "var(--ink)" }}>{p.weight}%</td>
+                              {/* equal starting weight */}
                               <td className={cn("py-2.5 pl-3", c.tone)}>{c.label}</td>
                             </tr>
                           );
