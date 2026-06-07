@@ -340,7 +340,10 @@ function NewAssessment() {
         organisation_id: orgId,
         name: form.title,
         description: form.description || null,
-        transformation_profile: top ? `${top.name} (${top.weight}%)` : "Balanced",
+        // New assessments start with equal CORE7 weighting. We persist only the
+        // most-implicated lens as a focus label (no weight %) so the overview
+        // never implies a fixed unequal default weighting.
+        transformation_profile: top ? top.name : "Balanced",
         scope_level: answers["q2"] || "Business unit",
         complexity_level: complexity,
         business_area: "Operations",
@@ -349,8 +352,16 @@ function NewAssessment() {
         created_by: user!.id,
       });
 
+      // Apply equal starting weights at the assessment level via weight_override
+      // so global seeded pillar defaults are not inherited. These remain fully
+      // overridable later in the readiness workspace.
       for (const p of repo.pillars.list()) {
-        repo.pillarAssessments.create({ assessment_id: a.id, pillar_id: p.id, status: "not_started" });
+        repo.pillarAssessments.create({
+          assessment_id: a.id,
+          pillar_id: p.id,
+          status: "not_started",
+          weight_override: EQUAL_PILLAR_WEIGHT,
+        });
       }
       repo.activity.log({
         organisation_id: orgId,
