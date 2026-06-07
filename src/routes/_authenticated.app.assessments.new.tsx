@@ -788,53 +788,29 @@ function NewAssessment() {
                 </div>
               )}
 
-              {/* Emerging CORE7 profile */}
+              {/* CORE7 starting weights — equal at creation */}
               <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-3 mb-3">
                   <LensMark size={36} />
                   <div>
-                    <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>Emerging CORE7 profile</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {stage === "context" ? "Live weighting preview" : stage === "survey" ? "Refines as you profile" : "Generated weighting"}
-                    </div>
+                    <div className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>CORE7 starting weights</div>
+                    <div className="text-[11px] text-muted-foreground">Equal at creation · customise later</div>
                   </div>
                 </div>
-                {stage === "context" ? (
-                  <ul className="space-y-2">
-                    {emerging.map((p) => (
-                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
-                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <span
-                            className={cn("block h-full transition-all duration-500", p.count > 0 ? "bg-primary" : "bg-muted-foreground/40")}
-                            style={{ width: `${Math.min(100, p.weight * 2.4)}%` }}
-                          />
-                        </span>
-                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <ul className="space-y-2">
-                    {profile.sorted.map((p) => (
-                      <li key={p.code} className="grid grid-cols-[34px_1fr_30px] items-center gap-2">
-                        <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
-                        <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <span
-                            className="block h-full bg-primary transition-all duration-500"
-                            style={{ width: `${(p.weight / maxWeight) * 100}%` }}
-                          />
-                        </span>
-                        <span className="font-mono text-[10px] text-right text-muted-foreground">{p.weight}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {stage === "survey" && (
-                  <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
-                    Provisional — confidence {overallConfidence.label.replace("Provisional · ", "").toLowerCase()} until all 23 signals are profiled.
-                  </p>
-                )}
+                <ul className="space-y-2">
+                  {PILLARS.map((p) => (
+                    <li key={p.code} className="grid grid-cols-[34px_1fr_44px] items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground">{pillarCompactLabel(p.code)}</span>
+                      <span className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <span className="block h-full bg-primary transition-all duration-500" style={{ width: "100%" }} />
+                      </span>
+                      <span className="font-mono text-[10px] text-right text-muted-foreground">{formatWeightPct(EQUAL_PILLAR_WEIGHT)}%</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[10px] text-muted-foreground/80 italic">
+                  No pillar is favoured at creation — weights total 100% and can be tailored in the readiness workspace.
+                </p>
               </div>
 
               {/* Active signals */}
