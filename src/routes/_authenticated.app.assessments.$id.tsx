@@ -178,7 +178,7 @@ function AssessmentOverview() {
                   <Link key={pillar.id} to="/app/assessments/$id/pillars/$pillarId" params={{ id, pillarId: pillar.id }} className="block border border-border rounded-sm bg-card p-4 hover:border-primary transition-colors group">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="eyebrow">Pillar {pillar.display_order} · weight {pillar.default_weight}%</div>
+                        <div className="eyebrow">Pillar {pillar.display_order} · weight {formatWeightPct(effWeight(pillar.id))}%</div>
                         <div className="font-medium mt-1">{pillar.name}</div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
