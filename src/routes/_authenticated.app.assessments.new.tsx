@@ -625,7 +625,7 @@ function NewAssessment() {
 
                 {/* CORE7 Pillar Importance Scores + Confidence */}
                 <div className="px-6 py-6 border-b border-border">
-                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100), with profiling confidence" />
+                  <SectionTitle icon={Gauge} label="CORE7 pillar importance scores" sub="How strongly each lens is implicated (0–100). Starting weight is equal across all pillars and can be tailored later." />
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full text-[12px]">
                       <thead>
