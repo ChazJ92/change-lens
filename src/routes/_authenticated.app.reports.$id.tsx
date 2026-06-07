@@ -13,7 +13,7 @@ import {
   confidenceFromLabel,
 } from "@/lib/scoring";
 import { Printer, ArrowLeft, ShieldCheck, AlertTriangle, Lightbulb, Sparkles, FileWarning } from "lucide-react";
-import { pillarAbbr } from "@/lib/pillars";
+import { pillarAbbr, formatWeightPct } from "@/lib/pillars";
 
 export const Route = createFileRoute("/_authenticated/app/reports/$id")({
   component: ReportPage,
@@ -153,7 +153,7 @@ function ReportPage() {
                         <div className="font-medium">{pillar.name}</div>
                         <div className="eyebrow">{pillarAbbr(pillar.code)}</div>
                       </td>
-                      <td className="px-4 py-2.5 text-right font-mono">{weight}%</td>
+                      <td className="px-4 py-2.5 text-right font-mono">{formatWeightPct(weight)}%</td>
                       <td className="px-4 py-2.5 text-right font-mono">
                         {mapped ?? "—"}
                         <span className="text-muted-foreground text-xs"> /100</span>
