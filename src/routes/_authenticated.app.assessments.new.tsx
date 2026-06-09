@@ -221,7 +221,7 @@ function NewAssessment() {
 
   const [stage, setStage] = useState<"context" | "survey" | "review">("context");
   const [lensIndex, setLensIndex] = useState(0);
-  const [pageIndex, setPageIndex] = useState(0);
+  
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
@@ -254,11 +254,9 @@ function NewAssessment() {
 
   // ---- Survey navigation derived state ----
   const lens = SURVEY[lensIndex];
-  const lensPages = useMemo(() => chunk(lens.questions, PAGE_SIZE), [lens]);
-  const pageQuestions = lensPages[pageIndex] ?? [];
   const totalQuestions = SURVEY.reduce((n, l) => n + l.questions.length, 0);
   const answeredCount = SURVEY.reduce(
-    (n, l) => n + l.questions.filter((q) => answers[q.id]).length,
+    (n, l) => n + l.questions.filter((q: SurveyQuestion) => answers[q.id]).length,
     0,
   );
   const surveyProgress = Math.round((answeredCount / totalQuestions) * 100);
@@ -269,34 +267,27 @@ function NewAssessment() {
   const overallConfidence = confidenceLabel(surveyProgress, profileComplete);
   const maxWeight = Math.max(1, ...profile.sorted.map((p) => p.weight));
 
-  const lensAnswered = (l: SurveyLens) => l.questions.filter((q) => answers[q.id]).length;
+  const lensAnswered = (l: SurveyLens) => l.questions.filter((q: SurveyQuestion) => answers[q.id]).length;
   const lensComplete = (l: SurveyLens) => lensAnswered(l) === l.questions.length;
-  const pageComplete = pageQuestions.every((q) => answers[q.id]);
-  const isFirstPage = lensIndex === 0 && pageIndex === 0;
-  const isLastPage = lensIndex === SURVEY.length - 1 && pageIndex === lensPages.length - 1;
+  const isFirstLens = lensIndex === 0;
+  const isLastLens = lensIndex === SURVEY.length - 1;
   const allAnswered = answeredCount === totalQuestions;
+
 
   function setAnswer(id: string, value: string) {
     setAnswers((a) => ({ ...a, [id]: value }));
   }
 
   function goNext() {
-    if (pageIndex < lensPages.length - 1) {
-      setPageIndex((p) => p + 1);
-    } else if (lensIndex < SURVEY.length - 1) {
+    if (lensIndex < SURVEY.length - 1) {
       setLensIndex((l) => l + 1);
-      setPageIndex(0);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function goBack() {
-    if (pageIndex > 0) {
-      setPageIndex((p) => p - 1);
-    } else if (lensIndex > 0) {
-      const prev = lensIndex - 1;
-      setLensIndex(prev);
-      setPageIndex(chunk(SURVEY[prev].questions, PAGE_SIZE).length - 1);
+    if (lensIndex > 0) {
+      setLensIndex((l) => l - 1);
     } else {
       setStage("context");
     }
@@ -305,16 +296,15 @@ function NewAssessment() {
 
   function jumpToLens(i: number) {
     setLensIndex(i);
-    setPageIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startSurvey() {
     setStage("survey");
     setLensIndex(0);
-    setPageIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   function goToReview() {
     setStage("review");
