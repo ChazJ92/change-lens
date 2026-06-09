@@ -511,9 +511,9 @@ function NewAssessment() {
                   </p>
                 </div>
 
-                <div className="px-6 py-6 space-y-7">
-                  {pageQuestions.map((q, qi) => {
-                    const globalIndex = lens.questions.findIndex((x) => x.id === q.id);
+                <div className="px-6 py-6 space-y-6">
+                  {lens.questions.map((q: SurveyQuestion, qi: number) => {
+                    const globalIndex = qi;
                     return (
                       <div key={q.id} className="space-y-3">
                         <div className="flex items-start gap-2.5">
@@ -527,7 +527,7 @@ function NewAssessment() {
                           value={answers[q.id]}
                           onChange={(v) => setAnswer(q.id, v)}
                         />
-                        {qi < pageQuestions.length - 1 && <div className="h-px bg-border/60" />}
+                        {qi < lens.questions.length - 1 && <div className="h-px bg-border/60" />}
                       </div>
                     );
                   })}
@@ -536,25 +536,26 @@ function NewAssessment() {
                 <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4">
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    {isFirstPage ? "Back to context" : "Back"}
+                    {isFirstLens ? "Back to context" : "Back"}
                   </Button>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                      {pageComplete ? "Lens signals captured" : "Profile the questions above to continue"}
+                      {lensComplete(lens) ? "Lens signals captured" : "Profile the questions above to continue"}
                     </span>
-                    {isLastPage ? (
+                    {isLastLens ? (
                       <Button onClick={goToReview} disabled={!allAnswered}>
                         Generate transformation profile
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     ) : (
-                      <Button onClick={goNext} disabled={!pageComplete}>
+                      <Button onClick={goNext} disabled={!lensComplete(lens)}>
                         Continue
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
                 </div>
+
               </div>
             </div>
             )}
