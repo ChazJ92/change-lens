@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { mockRepositories as repo } from "@/lib/mock";
+import { repositories as repo } from "@/lib/data";
 import { PageHeader, StatusChip } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {

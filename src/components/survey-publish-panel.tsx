@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,8 +24,8 @@ export function SurveyPublishPanel({ assessmentId, pillarId, pillarName }: Props
   const { data } = useQuery({
     queryKey: ["surveys", assessmentId, pillarId],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data: surveys } = await supabase
+      const db = await getBrowserDataClient();
+      const { data: surveys } = await db
         .from("surveys")
         .select("*, survey_recipients(*)")
         .eq("assessment_id", assessmentId)
@@ -42,15 +42,15 @@ export function SurveyPublishPanel({ assessmentId, pillarId, pillarName }: Props
         .map((e) => e.trim().toLowerCase())
         .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
       if (parsedEmails.length === 0) throw new Error("Add at least one valid email");
-      const supabase = await getSupabaseBrowserClient();
-      const { data: survey, error } = await supabase
+      const db = await getBrowserDataClient();
+      const { data: survey, error } = await db
         .from("surveys")
         .insert({ assessment_id: assessmentId, pillar_id: pillarId, title, description: description || null })
         .select()
         .single();
       if (error) throw error;
       const rows = parsedEmails.map((email) => ({ survey_id: survey.id, email }));
-      const { error: e2 } = await supabase.from("survey_recipients").insert(rows);
+      const { error: e2 } = await db.from("survey_recipients").insert(rows);
       if (e2) throw e2;
       return survey;
     },

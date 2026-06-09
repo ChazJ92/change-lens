@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -22,14 +22,14 @@ function SurveyPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["survey", token],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data: rec } = await supabase
+      const db = await getBrowserDataClient();
+      const { data: rec } = await db
         .from("survey_recipients")
         .select("*, surveys(*, pillars(name, description))")
         .eq("token", token)
         .maybeSingle();
       if (!rec) return null;
-      const { data: questions } = await supabase
+      const { data: questions } = await db
         .from("questions")
         .select("*")
         .eq("pillar_id", (rec as any).surveys.pillar_id)
@@ -41,16 +41,16 @@ function SurveyPage() {
   const submit = useMutation({
     mutationFn: async () => {
       if (!data) throw new Error("Survey not found");
-      const supabase = await getSupabaseBrowserClient();
+      const db = await getBrowserDataClient();
       const rows = (data.questions as any[]).map((q) => ({
         recipient_id: (data.rec as any).id,
         question_id: q.id,
         score: scores[q.id] ?? null,
         comment: comments[q.id]?.trim() || null,
       }));
-      const { error } = await supabase.from("survey_responses").insert(rows);
+      const { error } = await db.from("survey_responses").insert(rows);
       if (error) throw error;
-      await supabase.from("survey_recipients").update({ submitted_at: new Date().toISOString() }).eq("id", (data.rec as any).id);
+      await db.from("survey_recipients").update({ submitted_at: new Date().toISOString() }).eq("id", (data.rec as any).id);
     },
     onSuccess: () => toast.success("Thank you — your response has been recorded."),
     onError: (e: any) => toast.error(e.message ?? "Failed to submit"),

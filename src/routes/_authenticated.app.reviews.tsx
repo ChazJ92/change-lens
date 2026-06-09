@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { mockRepositories as repo } from "@/lib/mock";
+import { repositories as repo } from "@/lib/data";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { mapScore, readinessBand, fmtRelative, PILLAR_STATUS_LABELS } from "@/lib/scoring";
 import { ArrowRight, ShieldCheck, MessageSquareWarning, CheckCircle2, Filter } from "lucide-react";

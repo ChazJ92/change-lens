@@ -5,10 +5,10 @@ import { getAll, insertRows, updateWhere } from "./store";
  * Typed client-side repositories for the domain entities the product flows
  * exercise. These are intentionally storage-agnostic in shape: the
  * `DataRepositories` interface is the seam to swap the localStorage-backed
- * implementation for a Supabase-backed one later without touching callers.
+ * implementation for a remote backend later without touching callers.
  *
- * The mock implementation below shares the same persisted store as the
- * Supabase-compatible query builder, so reads and writes stay consistent
+ * The local implementation below shares the same persisted store as the
+ * query-builder client, so reads and writes stay consistent
  * regardless of which API a screen uses.
  */
 
@@ -70,7 +70,7 @@ function byCreatedDesc<T extends { created_at?: string | null }>(a: T, b: T) {
   return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
 }
 
-export const mockRepositories: DataRepositories = {
+export const repositories: DataRepositories = {
   organisations: {
     list: () => getAll("organisations"),
     listForUser: (userId) => {

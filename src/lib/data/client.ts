@@ -1,15 +1,14 @@
 import { RELATIONS, type Row, type TableName } from "./db";
 import { getAll, insertRows, updateWhere, deleteWhere } from "./store";
-import { MOCK_SESSION, MOCK_USER } from "./seed";
+import { LOCAL_SESSION, LOCAL_USER } from "./seed";
+import { getEvidenceBlobUrl, removeEvidenceBlobs, storeEvidenceBlob } from "./blobs";
 
 /**
- * A localStorage-backed stand-in for the Supabase browser client.
+ * localStorage-backed query-builder, auth and storage client.
  *
- * It implements the subset of the Supabase query-builder, auth and storage
- * APIs that the app uses, delegating all reads/writes to the shared mock store.
- * Because it presents the same surface as `@supabase/supabase-js`, screens stay
- * completely unchanged — swapping back to the real client is a one-line change
- * in `src/lib/supabase-browser.ts`.
+ * Implements the subset of APIs the app uses, delegating reads/writes to the
+ * shared local store. Screens with embedded selects use this client; domain
+ * flows may use typed repositories from `./repositories` instead.
  */
 
 type Result<T> = { data: T; error: { message: string } | null };
@@ -160,6 +159,7 @@ function withInsertDefaults<T extends TableName>(table: T, row: Record<string, u
   if (next.id == null) next.id = uid();
   if (next.created_at == null) next.created_at = new Date().toISOString();
   if (next.updated_at == null) next.updated_at = new Date().toISOString();
+  if (table === "survey_recipients" && next.token == null) next.token = uid();
   return next as Row<T>;
 }
 
@@ -232,11 +232,45 @@ class MutationQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>
   }
 }
 
+function upsertConflictKey(table: TableName): string {
+  if (table === "organisation_ai_settings" || table === "organisation_ai_keys") return "organisation_id";
+  return "id";
+}
+
+class UpsertQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>> {
+  constructor(private table: T, private row: Record<string, unknown>) {}
+
+  private run(): Result<Row<T>[]> {
+    const prepared = withInsertDefaults(this.table, this.row);
+    const key = upsertConflictKey(this.table);
+    const keyVal = (prepared as Record<string, unknown>)[key];
+    const exists = getAll(this.table).some((r) => (r as Record<string, unknown>)[key] === keyVal);
+    if (exists) {
+      const updated = updateWhere(
+        this.table,
+        (r) => (r as Record<string, unknown>)[key] === keyVal,
+        prepared as Partial<Row<T>>,
+      );
+      return { data: updated, error: null };
+    }
+    const inserted = insertRows(this.table, [prepared as Row<T>]);
+    return { data: inserted, error: null };
+  }
+
+  then<R1 = Result<Row<T>[]>, R2 = never>(
+    onfulfilled?: ((value: Result<Row<T>[]>) => R1 | PromiseLike<R1>) | null,
+    onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
+  ): PromiseLike<R1 | R2> {
+    return Promise.resolve(this.run()).then(onfulfilled, onrejected);
+  }
+}
+
 function from<T extends TableName>(table: T) {
   return {
     select: (selectStr = "*") => new SelectQuery(table, selectStr),
     insert: (rows: Record<string, unknown> | Record<string, unknown>[]) =>
       new InsertQuery(table, Array.isArray(rows) ? rows : [rows]),
+    upsert: (row: Record<string, unknown>) => new UpsertQuery(table, row),
     update: (patch: Record<string, unknown>) => new MutationQuery(table, "update", patch),
     delete: () => new MutationQuery(table, "delete", null),
   };
@@ -246,37 +280,46 @@ function from<T extends TableName>(table: T) {
 
 const auth = {
   async getSession() {
-    return { data: { session: MOCK_SESSION }, error: null };
+    return { data: { session: LOCAL_SESSION }, error: null };
   },
   async getUser() {
-    return { data: { user: MOCK_USER }, error: null };
+    return { data: { user: LOCAL_USER }, error: null };
   },
-  onAuthStateChange(callback: (event: string, session: typeof MOCK_SESSION) => void) {
-    Promise.resolve().then(() => callback("SIGNED_IN", MOCK_SESSION));
+  onAuthStateChange(callback: (event: string, session: typeof LOCAL_SESSION) => void) {
+    Promise.resolve().then(() => callback("SIGNED_IN", LOCAL_SESSION));
     return { data: { subscription: { unsubscribe() {} } } };
   },
   async signOut() {
     return { error: null };
   },
   async signInWithPassword() {
-    return { data: { session: MOCK_SESSION, user: MOCK_USER }, error: null };
+    return { data: { session: LOCAL_SESSION, user: LOCAL_USER }, error: null };
   },
   async signUp() {
-    return { data: { session: MOCK_SESSION, user: MOCK_USER }, error: null };
+    return { data: { session: LOCAL_SESSION, user: LOCAL_USER }, error: null };
   },
 };
 
 const storage = {
-  from() {
+  from(_bucket: string) {
     return {
-      async upload(path: string) {
-        return { data: { path }, error: null };
+      async upload(path: string, file: File, _opts?: Record<string, unknown>) {
+        try {
+          await storeEvidenceBlob(path, file);
+          return { data: { path }, error: null };
+        } catch (e) {
+          const message = e instanceof Error ? e.message : "Failed to store file locally";
+          return { data: null, error: { message } };
+        }
       },
-      async remove() {
+      async remove(paths: string[]) {
+        removeEvidenceBlobs(paths);
         return { data: [], error: null };
       },
-      async createSignedUrl(path: string) {
-        return { data: { signedUrl: `#mock/${path}` }, error: null };
+      async createSignedUrl(path: string, _expiresInSeconds?: number) {
+        const signedUrl = getEvidenceBlobUrl(path);
+        if (!signedUrl) return { data: null, error: { message: "File not found in local storage" } };
+        return { data: { signedUrl }, error: null };
       },
     };
   },
@@ -288,8 +331,8 @@ function buildClient() {
   return { from, auth, storage };
 }
 
-/** Returns a singleton localStorage-backed mock Supabase client. */
-export function getMockSupabaseClient() {
+/** Returns a singleton localStorage-backed data client. */
+export function getLocalDataClient() {
   client ??= buildClient();
   return client;
 }

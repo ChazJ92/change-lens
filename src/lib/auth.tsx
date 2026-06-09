@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
+import type { AppUser } from "@/lib/data";
 
-type AuthState = { user: User | null; loading: boolean };
+type AuthState = { user: AppUser | null; loading: boolean };
 const AuthCtx = createContext<AuthState>({ user: null, loading: true });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -17,17 +17,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     let cleanup: (() => void) | undefined;
 
-    getSupabaseBrowserClient().then((supabase) => {
+    getBrowserDataClient().then((db) => {
       if (!mounted) return;
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+      } = db.auth.onAuthStateChange((_event: string, session: { user: AppUser } | null) => {
         setState({ user: session?.user ?? null, loading: false });
         router.invalidate();
         qc.invalidateQueries();
       });
       cleanup = () => subscription.unsubscribe();
-      supabase.auth.getSession().then(({ data }: { data: any }) => {
+      db.auth.getSession().then(({ data }: { data: { session: { user: AppUser } | null } }) => {
         if (mounted) setState({ user: data.session?.user ?? null, loading: false });
       });
     });

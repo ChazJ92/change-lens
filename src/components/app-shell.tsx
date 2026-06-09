@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
 import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/brand";
 import { useAiSettings, aiEnabled, PROVIDER_LABELS } from "@/lib/ai-config";
-import { resetMockData } from "@/lib/mock";
+import { resetLocalData } from "@/lib/data";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -45,8 +45,8 @@ export function useCurrentOrg() {
     queryKey: ["current-org", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data, error } = await supabase
+      const db = await getBrowserDataClient();
+      const { data, error } = await db
         .from("memberships")
         .select("organisation_id, role, organisations(id, name, is_demo)")
         .order("role", { ascending: true });
@@ -76,8 +76,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const aiOn = aiEnabled(aiSettings);
 
   async function signOut() {
-    const supabase = await getSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    const db = await getBrowserDataClient();
+    await db.auth.signOut();
     navigate({ to: "/" });
   }
 
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   function resetDemoData() {
-    resetMockData();
+    resetLocalData();
     localStorage.removeItem("core7.org");
     window.location.reload();
   }

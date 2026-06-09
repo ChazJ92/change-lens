@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Upload, FileText, Loader2, ExternalLink, Trash2 } from "lucide-react";
@@ -20,8 +20,8 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["evidence", pillarAssessmentId ?? assessmentId],
     queryFn: async () => {
-      const supabase = await getSupabaseBrowserClient();
-      const q = supabase
+      const db = await getBrowserDataClient();
+      const q = db
         .from("evidence_items")
         .select("*")
         .eq("assessment_id", assessmentId)
@@ -36,9 +36,9 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
 
   const remove = useMutation({
     mutationFn: async (item: any) => {
-      const supabase = await getSupabaseBrowserClient();
-      if (item.storage_path) await supabase.storage.from("evidence").remove([item.storage_path]);
-      const { error } = await supabase.from("evidence_items").delete().eq("id", item.id);
+      const db = await getBrowserDataClient();
+      if (item.storage_path) await db.storage.from("evidence").remove([item.storage_path]);
+      const { error } = await db.from("evidence_items").delete().eq("id", item.id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["evidence"] }); toast.success("Evidence removed"); },
@@ -46,8 +46,8 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
   });
 
   async function openSigned(path: string) {
-    const supabase = await getSupabaseBrowserClient();
-    const { data, error } = await supabase.storage.from("evidence").createSignedUrl(path, 60 * 10);
+    const db = await getBrowserDataClient();
+    const { data, error } = await db.storage.from("evidence").createSignedUrl(path, 60 * 10);
     if (error || !data) { toast.error(error?.message ?? "Could not generate link"); return; }
     window.open(data.signedUrl, "_blank", "noopener");
   }
@@ -55,20 +55,16 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
-    const supabase = await getSupabaseBrowserClient();
+    const db = await getBrowserDataClient();
     try {
       for (const file of Array.from(files)) {
         if (file.size > 25 * 1024 * 1024) { toast.error(`${file.name}: exceeds 25 MB`); continue; }
         const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${organisationId}/${assessmentId}/${crypto.randomUUID()}-${safe}`;
-        const { error: upErr } = await supabase.storage.from("evidence").upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || "application/octet-stream",
-        });
+        const { error: upErr } = await db.storage.from("evidence").upload(path, file);
         if (upErr) { toast.error(`${file.name}: ${upErr.message}`); continue; }
-        const { data: userRes } = await supabase.auth.getUser();
-        const { error: insErr } = await supabase.from("evidence_items").insert({
+        const { data: userRes } = await db.auth.getUser();
+        const { error: insErr } = await db.from("evidence_items").insert({
           organisation_id: organisationId,
           assessment_id: assessmentId,
           pillar_assessment_id: pillarAssessmentId ?? null,
@@ -112,7 +108,7 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
         <p className="text-sm text-muted-foreground py-2">Loading evidence…</p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground py-2">
-          No evidence uploaded yet. Files are stored privately and accessed via short-lived signed links.
+          No evidence uploaded yet. Files are stored locally in your browser and open from this device only.
         </p>
       ) : (
         <ul className="divide-y divide-border">

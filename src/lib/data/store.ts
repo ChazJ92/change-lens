@@ -1,19 +1,19 @@
-import { type MockDb, type TableName, type Row } from "./db";
+import { type LocalDb, type TableName, type Row } from "./db";
 import { buildSeed } from "./seed";
 
 /**
- * localStorage-backed persistence for the mock database.
+ * localStorage-backed persistence for the local database.
  *
  * A single JSON blob holds the whole database. An in-memory cache avoids
  * re-parsing on every read. All mutations funnel through the helpers below so
- * the repositories and the Supabase-compatible query builder share one source
+ * the repositories and the query-builder client share one source
  * of truth.
  */
 const STORAGE_KEY = "core7.mock.db.v1";
 
-let cache: MockDb | null = null;
+let cache: LocalDb | null = null;
 
-function persist(db: MockDb) {
+function persist(db: LocalDb) {
   cache = db;
   if (typeof window === "undefined") return;
   try {
@@ -23,13 +23,13 @@ function persist(db: MockDb) {
   }
 }
 
-export function loadDb(): MockDb {
+export function loadDb(): LocalDb {
   if (cache) return cache;
   if (typeof window !== "undefined") {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try {
-        cache = JSON.parse(raw) as MockDb;
+        cache = JSON.parse(raw) as LocalDb;
         return cache;
       } catch {
         /* corrupt — fall through to reseed */
@@ -41,19 +41,19 @@ export function loadDb(): MockDb {
   return seeded;
 }
 
-export function saveDb(db: MockDb) {
+export function saveDb(db: LocalDb) {
   persist(db);
 }
 
 /** Wipe persisted data and rebuild from the seed. Returns the fresh database. */
-export function resetMockData(): MockDb {
+export function resetLocalData(): LocalDb {
   const seeded = buildSeed();
   persist(seeded);
   return seeded;
 }
 
 /** Alias kept for intent-revealing call sites. */
-export const reseedMockData = resetMockData;
+export const reseedLocalData = resetLocalData;
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
+import { verifyAndMaybeSaveAiSettings } from "@/lib/ai-verify";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { useAiSettings, PROVIDER_LABELS, PROVIDER_MODELS } from "@/lib/ai-config";
 import { Label } from "@/components/ui/label";
@@ -49,17 +50,13 @@ function AiSettingsPage() {
     setBusy(action);
     setTestResult(null);
     try {
-      const supabase = await getSupabaseBrowserClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not signed in");
-      const res = await fetch("/api/ai/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-        body: JSON.stringify({ organisationId: orgId, provider, model, apiKey, save: action === "save" }),
+      const json = await verifyAndMaybeSaveAiSettings({
+        organisationId: orgId,
+        provider,
+        model,
+        apiKey,
+        save: action === "save",
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`);
       setTestResult({ ok: !!json.ok, status: json.status ?? "Unknown" });
       if (action === "save") {
         if (json.ok) {
@@ -83,8 +80,8 @@ function AiSettingsPage() {
 
   async function disableAi() {
     if (!orgId) return;
-    const supabase = await getSupabaseBrowserClient();
-    const { error } = await supabase
+    const db = await getBrowserDataClient();
+    const { error } = await db
       .from("organisation_ai_settings")
       .update({ is_active: false })
       .eq("organisation_id", orgId);
@@ -163,8 +160,8 @@ function AiSettingsPage() {
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-                  Keys are stored encrypted-at-rest and never returned to the
-                  client. Only organisation admins can change AI settings.
+                  Keys are stored locally in your browser (base64-encoded) and
+                  never returned in plain text. Only organisation admins can change AI settings.
                 </p>
               </div>
 

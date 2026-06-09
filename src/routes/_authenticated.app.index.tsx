@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { mockRepositories as repo } from "@/lib/mock";
+import { repositories as repo } from "@/lib/data";
 import { useCurrentOrg, PageHeader, StatusChip } from "@/components/app-shell";
 import { AiConfigBanner } from "@/components/ai-gate";
 import { useAiSettings, aiEnabled } from "@/lib/ai-config";

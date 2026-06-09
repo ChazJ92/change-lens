@@ -1,4 +1,6 @@
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ENUMS
 CREATE TYPE public.app_role AS ENUM ('org_admin');
 CREATE TYPE public.org_role AS ENUM ('admin', 'member');
@@ -195,7 +197,7 @@ CREATE TABLE public.survey_recipients (
   email TEXT NOT NULL,
   name TEXT,
   stakeholder_group TEXT,
-  token TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(24), 'hex'),
+  token TEXT NOT NULL UNIQUE DEFAULT encode(extensions.gen_random_bytes(24), 'hex'),
   submitted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

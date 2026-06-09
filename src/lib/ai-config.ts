@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getBrowserDataClient } from "@/lib/local-data";
 
 export type AiSettings = {
   organisation_id: string;
@@ -16,8 +16,8 @@ export function useAiSettings(orgId?: string) {
     queryKey: ["ai-settings", orgId],
     enabled: !!orgId,
     queryFn: async (): Promise<AiSettings | null> => {
-      const supabase = await getSupabaseBrowserClient();
-      const { data } = await supabase
+      const db = await getBrowserDataClient();
+      const { data } = await db
         .from("organisation_ai_settings")
         .select("*")
         .eq("organisation_id", orgId!)

@@ -1,4 +1,4 @@
-import { emptyDb, type MockDb } from "./db";
+import { emptyDb, type LocalDb } from "./db";
 import { CORE7_PILLARS } from "@/lib/pillars";
 
 /**
@@ -20,8 +20,8 @@ const days = (n: number) => n * 24 * 60 * 60 * 1000;
 const hours = (n: number) => n * 60 * 60 * 1000;
 const aheadDays = (n: number) => new Date(NOW + days(n)).toISOString().slice(0, 10);
 
-/** The signed-in user used by the mock auth provider. */
-export const MOCK_USER = {
+/** The signed-in user used by the local auth provider. */
+export const LOCAL_USER = {
   id: "00000000-0000-4000-8000-000000000001",
   aud: "authenticated",
   role: "authenticated",
@@ -37,18 +37,21 @@ export const MOCK_USER = {
   updated_at: iso(hours(2)),
 } as const;
 
-export const MOCK_SESSION = {
-  access_token: "mock-access-token",
-  refresh_token: "mock-refresh-token",
+export const LOCAL_SESSION = {
+  access_token: "local-access-token",
+  refresh_token: "local-refresh-token",
   expires_in: 3600,
   expires_at: Math.floor((NOW + hours(1)) / 1000),
   token_type: "bearer",
-  user: MOCK_USER,
+  user: LOCAL_USER,
 } as const;
+
+export type AppUser = typeof LOCAL_USER;
+export type AppSession = typeof LOCAL_SESSION;
 
 type AnyRow = Record<string, unknown>;
 
-export function buildSeed(): MockDb {
+export function buildSeed(): LocalDb {
   const db = emptyDb();
 
   // --- Organisations -------------------------------------------------------
@@ -83,15 +86,15 @@ export function buildSeed(): MockDb {
 
   // --- Profile + memberships ----------------------------------------------
   db.profiles = [
-    { id: MOCK_USER.id, email: MOCK_USER.email, full_name: "Avery Stone", created_at: iso(days(120)) },
+    { id: LOCAL_USER.id, email: LOCAL_USER.email, full_name: "Avery Stone", created_at: iso(days(120)) },
   ];
   db.memberships = [
-    { id: uid(), organisation_id: orgMeridian, user_id: MOCK_USER.id, role: "admin", created_at: iso(days(120)) },
-    { id: uid(), organisation_id: orgDemo, user_id: MOCK_USER.id, role: "admin", created_at: iso(days(40)) },
+    { id: uid(), organisation_id: orgMeridian, user_id: LOCAL_USER.id, role: "admin", created_at: iso(days(120)) },
+    { id: uid(), organisation_id: orgDemo, user_id: LOCAL_USER.id, role: "admin", created_at: iso(days(40)) },
   ];
   db.user_roles = [
-    { id: uid(), organisation_id: orgMeridian, user_id: MOCK_USER.id, role: "org_admin" },
-    { id: uid(), organisation_id: orgDemo, user_id: MOCK_USER.id, role: "org_admin" },
+    { id: uid(), organisation_id: orgMeridian, user_id: LOCAL_USER.id, role: "org_admin" },
+    { id: uid(), organisation_id: orgDemo, user_id: LOCAL_USER.id, role: "org_admin" },
   ];
 
   // --- Pillars (CORE7) -----------------------------------------------------
@@ -113,7 +116,7 @@ export function buildSeed(): MockDb {
     display_order: p.display_order,
     subdimensions: p.subs,
   }));
-  db.pillars = pillars as AnyRow[] as MockDb["pillars"];
+  db.pillars = pillars as AnyRow[] as LocalDb["pillars"];
 
   // --- Questions (one per subdimension) -----------------------------------
   const questions: AnyRow[] = [];
@@ -129,7 +132,7 @@ export function buildSeed(): MockDb {
       });
     });
   }
-  db.questions = questions as MockDb["questions"];
+  db.questions = questions as LocalDb["questions"];
 
   // --- Assessments ---------------------------------------------------------
   const a1 = uid(); // active, partly scored
@@ -137,10 +140,10 @@ export function buildSeed(): MockDb {
   const a3 = uid(); // draft, not started
   const a4 = uid(); // demo org
   db.assessments = [
-    { id: a1, organisation_id: orgMeridian, name: "ERP & Operating Model Modernisation", description: "Replatform core finance and supply chain onto a single ERP while redesigning the operating model across three business units.", transformation_profile: "ERP", scope_level: "Enterprise", complexity_level: "Very high", business_area: "Finance", status: "active", target_completion_date: aheadDays(180), created_by: MOCK_USER.id, created_at: iso(days(35)), updated_at: iso(hours(5)) },
-    { id: a2, organisation_id: orgMeridian, name: "Customer Experience Transformation", description: "Unify digital and contact-centre journeys to lift retention and reduce cost-to-serve.", transformation_profile: "Customer experience", scope_level: "Business unit", complexity_level: "High", business_area: "Customer", status: "in_review", target_completion_date: aheadDays(60), created_by: MOCK_USER.id, created_at: iso(days(70)), updated_at: iso(days(2)) },
-    { id: a3, organisation_id: orgMeridian, name: "Cloud Migration Programme", description: "Migrate on-premise workloads to cloud with a landing-zone first approach.", transformation_profile: "Cloud migration", scope_level: "Function", complexity_level: "Medium", business_area: "Technology", status: "draft", target_completion_date: aheadDays(240), created_by: MOCK_USER.id, created_at: iso(days(8)), updated_at: iso(days(8)) },
-    { id: a4, organisation_id: orgDemo, name: "Demo: Enterprise Digital Readiness", description: "Sample assessment showing a mid-flight digital transformation across all seven CORE7 pillars.", transformation_profile: "Digital", scope_level: "Enterprise", complexity_level: "High", business_area: "Operations", status: "active", target_completion_date: aheadDays(120), created_by: MOCK_USER.id, created_at: iso(days(20)), updated_at: iso(hours(20)) },
+    { id: a1, organisation_id: orgMeridian, name: "ERP & Operating Model Modernisation", description: "Replatform core finance and supply chain onto a single ERP while redesigning the operating model across three business units.", transformation_profile: "ERP", scope_level: "Enterprise", complexity_level: "Very high", business_area: "Finance", status: "active", target_completion_date: aheadDays(180), created_by: LOCAL_USER.id, created_at: iso(days(35)), updated_at: iso(hours(5)) },
+    { id: a2, organisation_id: orgMeridian, name: "Customer Experience Transformation", description: "Unify digital and contact-centre journeys to lift retention and reduce cost-to-serve.", transformation_profile: "Customer experience", scope_level: "Business unit", complexity_level: "High", business_area: "Customer", status: "in_review", target_completion_date: aheadDays(60), created_by: LOCAL_USER.id, created_at: iso(days(70)), updated_at: iso(days(2)) },
+    { id: a3, organisation_id: orgMeridian, name: "Cloud Migration Programme", description: "Migrate on-premise workloads to cloud with a landing-zone first approach.", transformation_profile: "Cloud migration", scope_level: "Function", complexity_level: "Medium", business_area: "Technology", status: "draft", target_completion_date: aheadDays(240), created_by: LOCAL_USER.id, created_at: iso(days(8)), updated_at: iso(days(8)) },
+    { id: a4, organisation_id: orgDemo, name: "Demo: Enterprise Digital Readiness", description: "Sample assessment showing a mid-flight digital transformation across all seven CORE7 pillars.", transformation_profile: "Digital", scope_level: "Enterprise", complexity_level: "High", business_area: "Operations", status: "active", target_completion_date: aheadDays(120), created_by: LOCAL_USER.id, created_at: iso(days(20)), updated_at: iso(hours(20)) },
   ];
 
   // --- Pillar assessments --------------------------------------------------
@@ -214,7 +217,7 @@ export function buildSeed(): MockDb {
       });
     });
   }
-  db.pillar_assessments = pillarAssessments as MockDb["pillar_assessments"];
+  db.pillar_assessments = pillarAssessments as LocalDb["pillar_assessments"];
 
   const pillarByOrder = (n: number) => pillars.find((p) => p.display_order === n)!.id;
 
@@ -239,27 +242,27 @@ export function buildSeed(): MockDb {
 
   // --- Review comments -----------------------------------------------------
   db.review_comments = [
-    { id: uid(), pillar_assessment_id: paIndex[a1][3], author_id: MOCK_USER.id, comment: "Operating model gaps in transition readiness — please add cutover rehearsal evidence before resubmitting.", decision: "changes_requested", created_at: iso(days(2)) },
-    { id: uid(), pillar_assessment_id: paIndex[a2][1], author_id: MOCK_USER.id, comment: "Strong strategic alignment and clear roadmap. Approved.", decision: "approved", created_at: iso(days(4)) },
-    { id: uid(), pillar_assessment_id: paIndex[a1][2], author_id: MOCK_USER.id, comment: "Governance cadence looks solid. One question on funding gate ownership.", decision: null, created_at: iso(hours(20)) },
+    { id: uid(), pillar_assessment_id: paIndex[a1][3], author_id: LOCAL_USER.id, comment: "Operating model gaps in transition readiness — please add cutover rehearsal evidence before resubmitting.", decision: "changes_requested", created_at: iso(days(2)) },
+    { id: uid(), pillar_assessment_id: paIndex[a2][1], author_id: LOCAL_USER.id, comment: "Strong strategic alignment and clear roadmap. Approved.", decision: "approved", created_at: iso(days(4)) },
+    { id: uid(), pillar_assessment_id: paIndex[a1][2], author_id: LOCAL_USER.id, comment: "Governance cadence looks solid. One question on funding gate ownership.", decision: null, created_at: iso(hours(20)) },
   ];
 
   // --- Score overrides -----------------------------------------------------
   db.score_overrides = [
-    { id: uid(), pillar_assessment_id: paIndex[a2][1], author_id: MOCK_USER.id, previous_score: 4.0, new_score: 4.2, rationale: "Moderated up after reviewing the assurance evidence pack.", created_at: iso(days(4)) },
-    { id: uid(), pillar_assessment_id: paIndex[a1][1], author_id: MOCK_USER.id, previous_score: 3.4, new_score: 3.6, rationale: "Adjusted to reflect the newly approved roadmap.", created_at: iso(days(3)) },
+    { id: uid(), pillar_assessment_id: paIndex[a2][1], author_id: LOCAL_USER.id, previous_score: 4.0, new_score: 4.2, rationale: "Moderated up after reviewing the assurance evidence pack.", created_at: iso(days(4)) },
+    { id: uid(), pillar_assessment_id: paIndex[a1][1], author_id: LOCAL_USER.id, previous_score: 3.4, new_score: 3.6, rationale: "Adjusted to reflect the newly approved roadmap.", created_at: iso(days(3)) },
   ];
 
   // --- Audit logs (activity) ----------------------------------------------
   db.audit_logs = [
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "ERP & Operating Model Modernisation"' }, created_at: iso(days(35)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategic Alignment & Leadership for review" }, created_at: iso(days(5)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Process Maturity" }, created_at: iso(days(2)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategic Alignment & Leadership: 3.4 → 3.6" }, created_at: iso(days(3)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategic Alignment & Leadership" }, created_at: iso(days(4)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_status_changed", detail: { note: "Moved to In review" }, created_at: iso(days(2)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a3, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Cloud Migration Programme"' }, created_at: iso(days(8)) },
-    { id: uid(), organisation_id: orgDemo, assessment_id: a4, actor_id: MOCK_USER.id, actor_email: MOCK_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Demo: Enterprise Digital Readiness"' }, created_at: iso(days(20)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "ERP & Operating Model Modernisation"' }, created_at: iso(days(35)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "pillar_submitted", detail: { note: "Submitted Strategic Alignment & Leadership for review" }, created_at: iso(days(5)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "changes_requested", detail: { note: "Requested changes on Process Maturity" }, created_at: iso(days(2)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "score_overridden", detail: { note: "Override on Strategic Alignment & Leadership: 3.4 → 3.6" }, created_at: iso(days(3)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "pillar_approved", detail: { note: "Approved Strategic Alignment & Leadership" }, created_at: iso(days(4)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a2, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "assessment_status_changed", detail: { note: "Moved to In review" }, created_at: iso(days(2)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a3, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Cloud Migration Programme"' }, created_at: iso(days(8)) },
+    { id: uid(), organisation_id: orgDemo, assessment_id: a4, actor_id: LOCAL_USER.id, actor_email: LOCAL_USER.email, event_type: "assessment_created", detail: { note: 'Created assessment "Demo: Enterprise Digital Readiness"' }, created_at: iso(days(20)) },
   ];
 
   // --- Surveys + recipients (stakeholder input) ---------------------------
@@ -274,8 +277,8 @@ export function buildSeed(): MockDb {
 
   // --- Evidence ------------------------------------------------------------
   db.evidence_items = [
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, pillar_assessment_id: paIndex[a1][1], file_name: "Transformation strategy on a page.pdf", file_type: "application/pdf", evidence_type: "strategy_document", description: "Board-approved strategy summary.", processing_status: "complete", relevance_score: 0.9, ai_summary: "Clear ambition and sequenced roadmap aligned to enterprise strategy.", storage_path: null, uploaded_by: MOCK_USER.id, created_at: iso(days(7)) },
-    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, pillar_assessment_id: paIndex[a1][2], file_name: "Programme governance pack.pptx", file_type: "application/vnd.openxmlformats-officedocument.presentationml.presentation", evidence_type: "governance_paper", description: "Steering committee terms of reference and RACI.", processing_status: "complete", relevance_score: 0.8, ai_summary: "Defined decision rights and funding gates; cadence is monthly.", storage_path: null, uploaded_by: MOCK_USER.id, created_at: iso(days(6)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, pillar_assessment_id: paIndex[a1][1], file_name: "Transformation strategy on a page.pdf", file_type: "application/pdf", evidence_type: "strategy_document", description: "Board-approved strategy summary.", processing_status: "complete", relevance_score: 0.9, ai_summary: "Clear ambition and sequenced roadmap aligned to enterprise strategy.", storage_path: null, uploaded_by: LOCAL_USER.id, created_at: iso(days(7)) },
+    { id: uid(), organisation_id: orgMeridian, assessment_id: a1, pillar_assessment_id: paIndex[a1][2], file_name: "Programme governance pack.pptx", file_type: "application/vnd.openxmlformats-officedocument.presentationml.presentation", evidence_type: "governance_paper", description: "Steering committee terms of reference and RACI.", processing_status: "complete", relevance_score: 0.8, ai_summary: "Defined decision rights and funding gates; cadence is monthly.", storage_path: null, uploaded_by: LOCAL_USER.id, created_at: iso(days(6)) },
   ];
 
   return db;

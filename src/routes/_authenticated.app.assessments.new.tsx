@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockRepositories as repo } from "@/lib/mock";
+import { repositories as repo } from "@/lib/data";
 import { useCurrentOrg, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";

@@ -1,12 +1,10 @@
-import type { Database } from "@/integrations/supabase/types";
+import type { Database } from "./types";
 
 /**
- * Shared type aliases for the localStorage-backed mock data layer.
+ * Shared type aliases for the localStorage-backed data layer.
  *
- * These mirror the generated Supabase row/insert/update shapes so the mock
- * layer is type-compatible with the eventual Supabase-backed implementation.
- * When real Supabase data is wired up, the repositories in `repositories.ts`
- * are the only thing that needs a second implementation — see `DataRepositories`.
+ * Row/insert/update shapes mirror the application schema so a future backend
+ * can implement the same `DataRepositories` interface without touching callers.
  */
 type Tables = Database["public"]["Tables"];
 
@@ -16,7 +14,7 @@ export type Insert<T extends TableName> = Tables[T]["Insert"];
 export type Update<T extends TableName> = Tables[T]["Update"];
 
 /** The complete in-memory database shape persisted to localStorage. */
-export type MockDb = { [K in TableName]: Row<K>[] };
+export type LocalDb = { [K in TableName]: Row<K>[] };
 
 /** Every table name, used to build a fully-populated empty database. */
 export const TABLE_NAMES: TableName[] = [
@@ -46,8 +44,8 @@ export const TABLE_NAMES: TableName[] = [
 ];
 
 /** An empty database with every table present as an empty array. */
-export function emptyDb(): MockDb {
-  const db = {} as MockDb;
+export function emptyDb(): LocalDb {
+  const db = {} as LocalDb;
   for (const name of TABLE_NAMES) {
     (db as Record<string, unknown[]>)[name] = [];
   }
@@ -55,7 +53,7 @@ export function emptyDb(): MockDb {
 }
 
 /**
- * Relationship config powering Supabase-style embedded selects
+ * Relationship config powering embedded selects
  * (e.g. `organisations(id, name)` or `survey_recipients(*)`).
  *
  * - `to-one`: the local row holds the foreign key (`fk`) pointing at the
