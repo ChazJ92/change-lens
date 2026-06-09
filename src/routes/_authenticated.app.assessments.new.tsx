@@ -119,14 +119,6 @@ const SURVEY: SurveyLens[] = [
   },
 ];
 
-// How many questions to reveal at once within a lens (progressive disclosure).
-const PAGE_SIZE = 3;
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
 
 // ---- Transparent local scoring model (CORE7 methodology) --------------------
 // Each survey answer maps to a named *driver*. Driver scores aggregate into the
@@ -229,7 +221,7 @@ function NewAssessment() {
 
   const [stage, setStage] = useState<"context" | "survey" | "review">("context");
   const [lensIndex, setLensIndex] = useState(0);
-  const [pageIndex, setPageIndex] = useState(0);
+  
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
@@ -262,11 +254,9 @@ function NewAssessment() {
 
   // ---- Survey navigation derived state ----
   const lens = SURVEY[lensIndex];
-  const lensPages = useMemo(() => chunk(lens.questions, PAGE_SIZE), [lens]);
-  const pageQuestions = lensPages[pageIndex] ?? [];
   const totalQuestions = SURVEY.reduce((n, l) => n + l.questions.length, 0);
   const answeredCount = SURVEY.reduce(
-    (n, l) => n + l.questions.filter((q) => answers[q.id]).length,
+    (n, l) => n + l.questions.filter((q: SurveyQuestion) => answers[q.id]).length,
     0,
   );
   const surveyProgress = Math.round((answeredCount / totalQuestions) * 100);
@@ -277,34 +267,27 @@ function NewAssessment() {
   const overallConfidence = confidenceLabel(surveyProgress, profileComplete);
   const maxWeight = Math.max(1, ...profile.sorted.map((p) => p.weight));
 
-  const lensAnswered = (l: SurveyLens) => l.questions.filter((q) => answers[q.id]).length;
+  const lensAnswered = (l: SurveyLens) => l.questions.filter((q: SurveyQuestion) => answers[q.id]).length;
   const lensComplete = (l: SurveyLens) => lensAnswered(l) === l.questions.length;
-  const pageComplete = pageQuestions.every((q) => answers[q.id]);
-  const isFirstPage = lensIndex === 0 && pageIndex === 0;
-  const isLastPage = lensIndex === SURVEY.length - 1 && pageIndex === lensPages.length - 1;
+  const isFirstLens = lensIndex === 0;
+  const isLastLens = lensIndex === SURVEY.length - 1;
   const allAnswered = answeredCount === totalQuestions;
+
 
   function setAnswer(id: string, value: string) {
     setAnswers((a) => ({ ...a, [id]: value }));
   }
 
   function goNext() {
-    if (pageIndex < lensPages.length - 1) {
-      setPageIndex((p) => p + 1);
-    } else if (lensIndex < SURVEY.length - 1) {
+    if (lensIndex < SURVEY.length - 1) {
       setLensIndex((l) => l + 1);
-      setPageIndex(0);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function goBack() {
-    if (pageIndex > 0) {
-      setPageIndex((p) => p - 1);
-    } else if (lensIndex > 0) {
-      const prev = lensIndex - 1;
-      setLensIndex(prev);
-      setPageIndex(chunk(SURVEY[prev].questions, PAGE_SIZE).length - 1);
+    if (lensIndex > 0) {
+      setLensIndex((l) => l - 1);
     } else {
       setStage("context");
     }
@@ -313,16 +296,15 @@ function NewAssessment() {
 
   function jumpToLens(i: number) {
     setLensIndex(i);
-    setPageIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startSurvey() {
     setStage("survey");
     setLensIndex(0);
-    setPageIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   function goToReview() {
     setStage("review");
@@ -529,9 +511,9 @@ function NewAssessment() {
                   </p>
                 </div>
 
-                <div className="px-6 py-6 space-y-7">
-                  {pageQuestions.map((q, qi) => {
-                    const globalIndex = lens.questions.findIndex((x) => x.id === q.id);
+                <div className="px-6 py-6 space-y-6">
+                  {lens.questions.map((q: SurveyQuestion, qi: number) => {
+                    const globalIndex = qi;
                     return (
                       <div key={q.id} className="space-y-3">
                         <div className="flex items-start gap-2.5">
@@ -545,7 +527,7 @@ function NewAssessment() {
                           value={answers[q.id]}
                           onChange={(v) => setAnswer(q.id, v)}
                         />
-                        {qi < pageQuestions.length - 1 && <div className="h-px bg-border/60" />}
+                        {qi < lens.questions.length - 1 && <div className="h-px bg-border/60" />}
                       </div>
                     );
                   })}
@@ -554,25 +536,26 @@ function NewAssessment() {
                 <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4">
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    {isFirstPage ? "Back to context" : "Back"}
+                    {isFirstLens ? "Back to context" : "Back"}
                   </Button>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                      {pageComplete ? "Lens signals captured" : "Profile the questions above to continue"}
+                      {lensComplete(lens) ? "Lens signals captured" : "Profile the questions above to continue"}
                     </span>
-                    {isLastPage ? (
+                    {isLastLens ? (
                       <Button onClick={goToReview} disabled={!allAnswered}>
                         Generate transformation profile
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     ) : (
-                      <Button onClick={goNext} disabled={!pageComplete}>
+                      <Button onClick={goNext} disabled={!lensComplete(lens)}>
                         Continue
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
                 </div>
+
               </div>
             </div>
             )}
