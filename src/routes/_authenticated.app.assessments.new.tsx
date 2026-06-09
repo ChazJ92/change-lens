@@ -119,14 +119,6 @@ const SURVEY: SurveyLens[] = [
   },
 ];
 
-// How many questions to reveal at once within a lens (progressive disclosure).
-const PAGE_SIZE = 3;
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
 
 // ---- Transparent local scoring model (CORE7 methodology) --------------------
 // Each survey answer maps to a named *driver*. Driver scores aggregate into the
