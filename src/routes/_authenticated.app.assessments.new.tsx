@@ -37,9 +37,10 @@ const STAGES = [
 
 // ---- Profiling survey definition --------------------------------------------
 // 23 questions across 7 lenses. Progressive disclosure: one lens at a time,
-// questions revealed in small pages to reduce perceived effort.
-const EXTENT = ["Minimal", "Moderate", "Significant", "Decisive"];
-
+// questions revealed in small pages to reduce perceived effort. Question
+// wording and answer options are canonical and must match the profiling
+// specification exactly — options stay in the provided order so the scoring
+// model (which ranks answers by their index) stays meaningful.
 type SurveyQuestion = { id: string; text: string; options: string[] };
 type SurveyLens = { key: string; name: string; why: string; questions: SurveyQuestion[] };
 
@@ -49,11 +50,11 @@ const SURVEY: SurveyLens[] = [
     name: "Strategic Alignment & Leadership",
     why: "Transformations stall when scale, scope and leadership intent are not aligned. This lens profiles the reach of the change and the leadership commitment it will demand.",
     questions: [
-      { id: "q1", text: "Approximately how many people are expected to be impacted by this change?", options: ["Under 50", "50–250", "250–1,000", "1,000+"] },
-      { id: "q2", text: "What organisational level is primarily affected by this change?", options: ["Single team", "Department", "Division", "Enterprise-wide"] },
-      { id: "q3", text: "Will success depend on alignment across multiple leadership teams?", options: ["Unlikely", "Possibly", "Likely", "Essential"] },
-      { id: "q4", text: "To what extent will employee awareness and understanding influence successful delivery?", options: EXTENT },
-      { id: "q5", text: "To what extent will success depend on leaders actively supporting and reinforcing the change?", options: EXTENT },
+      { id: "q1", text: "Approximately how many people are expected to be impacted by this change?", options: ["Fewer than 100", "100–999", "1,000–4,999", "5,000–19,999", "20,000+"] },
+      { id: "q2", text: "What organisational level is primarily affected by this change?", options: ["Single team", "Multiple teams within the same division", "Multiple teams across different divisions or business areas", "Function", "Directorate", "Organisation-wide"] },
+      { id: "q3", text: "Will success depend on alignment across multiple leadership teams?", options: ["No alignment required", "Limited alignment required", "Moderate alignment required", "Significant alignment required"] },
+      { id: "q4", text: "To what extent will employee awareness and understanding influence successful delivery?", options: ["Minimal influence", "Some influence", "Significant influence", "Critical influence"] },
+      { id: "q5", text: "To what extent will success depend on leaders actively supporting and reinforcing the change?", options: ["Minimal support required", "Some support required", "Significant support required", "Continuous leadership reinforcement is critical"] },
     ],
   },
   {
@@ -61,9 +62,9 @@ const SURVEY: SurveyLens[] = [
     name: "Data Quality & Insight",
     why: "Change increasingly runs on data. This lens profiles how far delivery relies on trustworthy information and the new insight the organisation must produce.",
     questions: [
-      { id: "q6", text: "To what extent will this change depend on accurate, reliable or accessible data?", options: EXTENT },
-      { id: "q7", text: "Will new reporting, analytics or management information be required?", options: ["None", "Minor", "Moderate", "Extensive"] },
-      { id: "q8", text: "Will success require new KPIs, measures or performance indicators?", options: ["No", "Some", "Several", "Fundamental"] },
+      { id: "q6", text: "To what extent will this change depend on accurate, reliable or accessible data?", options: ["Low dependency", "Moderate dependency", "High dependency"] },
+      { id: "q7", text: "Will new reporting, analytics or management information be required?", options: ["No additional reporting required", "Some additional reporting required", "Significant reporting and analytics required"] },
+      { id: "q8", text: "Will success require new KPIs, measures or performance indicators?", options: ["No", "Some new measures required", "Significant new measures required"] },
     ],
   },
   {
@@ -71,9 +72,9 @@ const SURVEY: SurveyLens[] = [
     name: "Process Maturity",
     why: "The depth of process change shapes operational risk. This lens profiles how much existing ways of working must be redesigned and re-connected.",
     questions: [
-      { id: "q9", text: "Will existing business processes need to change?", options: ["No", "Minor", "Moderate", "Major"] },
-      { id: "q10", text: "Will people need to perform their work differently?", options: ["Minimal", "Moderate", "Significant", "Fundamental"] },
-      { id: "q11", text: "To what extent will successful delivery depend on multiple business processes working together effectively?", options: EXTENT },
+      { id: "q9", text: "Will existing business processes need to change?", options: ["No change required", "Minor changes required", "Moderate changes required", "Significant process redesign required"] },
+      { id: "q10", text: "Will people need to perform their work differently?", options: ["No change to ways of working", "Some changes to ways of working", "Moderate changes to ways of working", "Significant changes to ways of working"] },
+      { id: "q11", text: "To what extent will successful delivery depend on multiple business processes working together effectively?", options: ["Minimal dependency", "Some dependency", "Significant dependency", "Extensive cross-process dependency"] },
     ],
   },
   {
@@ -81,9 +82,9 @@ const SURVEY: SurveyLens[] = [
     name: "Technology & Tooling",
     why: "Technical scope drives complexity and dependency. This lens profiles the systems footprint of the change and the integration effort it implies.",
     questions: [
-      { id: "q12", text: "Does this change introduce new technology or digital tools?", options: ["None", "Minor", "Moderate", "Substantial"] },
-      { id: "q13", text: "Will existing systems require integration, modification or replacement?", options: ["None", "Minor", "Moderate", "Extensive"] },
-      { id: "q14", text: "How technically complex is the proposed change?", options: ["Low", "Moderate", "High", "Very high"] },
+      { id: "q12", text: "Does this change introduce new technology or digital tools?", options: ["No", "Some new technology or tools", "Significant new technology or tools"] },
+      { id: "q13", text: "Will existing systems require integration, modification or replacement?", options: ["No changes required", "Some changes required", "Moderate changes required", "Significant changes required"] },
+      { id: "q14", text: "How technically complex is the proposed change?", options: ["Low complexity", "Moderate complexity", "High complexity", "Unsure"] },
     ],
   },
   {
@@ -91,9 +92,9 @@ const SURVEY: SurveyLens[] = [
     name: "People & Capability",
     why: "Capability gaps quietly determine adoption. This lens profiles the new skills, roles and specialist expertise success will rely upon.",
     questions: [
-      { id: "q15", text: "Will employees require new skills or knowledge?", options: ["None", "Some", "Significant", "Extensive"] },
-      { id: "q16", text: "Will roles or responsibilities change?", options: ["No", "Minor", "Moderate", "Major"] },
-      { id: "q17", text: "To what extent does successful delivery depend on specialist expertise?", options: EXTENT },
+      { id: "q15", text: "Will employees require new skills or knowledge?", options: ["No additional skills required", "Limited training required", "Moderate capability development required", "Significant capability development required"] },
+      { id: "q16", text: "Will roles or responsibilities change?", options: ["No changes required", "Some changes required", "Moderate changes required", "Significant changes required"] },
+      { id: "q17", text: "To what extent does successful delivery depend on specialist expertise?", options: ["Minimal dependency", "Some dependency", "Significant dependency", "Critical dependency"] },
     ],
   },
   {
@@ -101,9 +102,9 @@ const SURVEY: SurveyLens[] = [
     name: "Governance & Risk",
     why: "Assurance and coordination needs grow with exposure. This lens profiles the control, compliance and decision-making demands of the change.",
     questions: [
-      { id: "q18", text: "Does the change introduce new risks, controls or assurance requirements?", options: ["None", "Minor", "Moderate", "Significant"] },
-      { id: "q19", text: "Is the change subject to regulatory, legal or compliance requirements?", options: ["None", "Limited", "Moderate", "Heavily regulated"] },
-      { id: "q20", text: "How many business areas will need to coordinate decisions during implementation?", options: ["1–2", "3–4", "5–6", "7+"] },
+      { id: "q18", text: "Does the change introduce new risks, controls or assurance requirements?", options: ["No additional requirements", "Some additional requirements", "Moderate additional requirements", "Significant additional requirements"] },
+      { id: "q19", text: "Is the change subject to regulatory, legal or compliance requirements?", options: ["No requirements", "Some requirements", "Moderate requirements", "Significant requirements"] },
+      { id: "q20", text: "How many business areas will need to coordinate decisions during implementation?", options: ["One business area", "A small number of business areas", "Several business areas", "Organisation-wide coordination required"] },
     ],
   },
   {
@@ -111,9 +112,9 @@ const SURVEY: SurveyLens[] = [
     name: "Organisational Adaptability",
     why: "Behavioural change is the hardest to sustain. This lens profiles how far the organisation must shift its habits, norms and ways of thinking.",
     questions: [
-      { id: "q21", text: "How much behavioural change is required for success?", options: ["Minimal", "Moderate", "Significant", "Profound"] },
-      { id: "q22", text: "To what extent will people need to adopt new behaviours, habits or ways of thinking?", options: EXTENT },
-      { id: "q23", text: "To what extent does this change challenge existing ways of working or organisational norms?", options: ["Minimal", "Moderate", "Significant", "Fundamental"] },
+      { id: "q21", text: "How much behavioural change is required for success?", options: ["Little or none", "Moderate behavioural change", "Significant behavioural change", "Extensive behavioural change"] },
+      { id: "q22", text: "To what extent will people need to adopt new behaviours, habits or ways of thinking?", options: ["Minimal adoption required", "Some adoption required", "Significant adoption required", "Fundamental mindset shift required"] },
+      { id: "q23", text: "To what extent does this change challenge existing ways of working or organisational norms?", options: ["Little or no challenge", "Some challenge", "Moderate challenge", "Significant challenge"] },
     ],
   },
 ];
