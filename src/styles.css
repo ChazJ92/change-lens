@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
+
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -8,8 +9,6 @@
    Soft Surface canvas, Ink/Slate text, Deep Teal primary with Steel/Olive/Amber/Oxide.
    Inter (Söhne substitute) for UI, Source Serif 4 (Tiempos substitute) for display,
    IBM Plex Mono for eyebrows and tabular numerics. */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
