@@ -4,11 +4,15 @@ import { useRouter } from "@tanstack/react-router";
 import { getBrowserDataClient } from "@/lib/local-data";
 import type { AppUser } from "@/lib/data";
 
-type AuthState = { user: AppUser | null; loading: boolean };
-const AuthCtx = createContext<AuthState>({ user: null, loading: true });
+type LocalSessionState = { user: AppUser | null; loading: boolean };
+const LocalSessionCtx = createContext<LocalSessionState>({ user: null, loading: true });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({ user: null, loading: true });
+/**
+ * Provides the seeded browser-only demo user. This is not authentication; it is
+ * just enough identity for local product flows, audit rows and ownership labels.
+ */
+export function LocalSessionProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<LocalSessionState>({ user: null, loading: true });
   const router = useRouter();
   const qc = useQueryClient();
 
@@ -38,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [router, qc]);
 
-  return <AuthCtx.Provider value={state}>{children}</AuthCtx.Provider>;
+  return <LocalSessionCtx.Provider value={state}>{children}</LocalSessionCtx.Provider>;
 }
 
-export const useAuth = () => useContext(AuthCtx);
+export const useLocalSession = () => useContext(LocalSessionCtx);

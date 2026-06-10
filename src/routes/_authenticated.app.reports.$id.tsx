@@ -25,15 +25,25 @@ function ReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["report", id],
     queryFn: async () => {
+      const [a, pa, p, risks, recs, ov, com, act] = await Promise.all([
+        repo.assessments.get(id),
+        repo.pillarAssessments.listByAssessment(id),
+        repo.pillars.list(),
+        repo.risks.listByAssessment(id),
+        repo.recommendations.listByAssessment(id),
+        repo.scoreOverrides.list(),
+        repo.reviewComments.list(),
+        repo.activity.listByAssessment(id),
+      ]);
       return {
-        a: repo.assessments.get(id),
-        pa: repo.pillarAssessments.listByAssessment(id),
-        p: repo.pillars.list(),
-        risks: repo.risks.listByAssessment(id),
-        recs: repo.recommendations.listByAssessment(id),
-        ov: repo.scoreOverrides.list(),
-        com: repo.reviewComments.list(),
-        act: repo.activity.listByAssessment(id),
+        a,
+        pa,
+        p,
+        risks,
+        recs,
+        ov,
+        com,
+        act,
       };
     },
   });

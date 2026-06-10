@@ -45,11 +45,12 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
     onError: (e: any) => toast.error(e.message ?? "Failed to remove"),
   });
 
-  async function openSigned(path: string) {
+  async function openLocalFile(path: string) {
     const db = await getBrowserDataClient();
-    const { data, error } = await db.storage.from("evidence").createSignedUrl(path, 60 * 10);
-    if (error || !data) { toast.error(error?.message ?? "Could not generate link"); return; }
-    window.open(data.signedUrl, "_blank", "noopener");
+    const { data, error } = await db.storage.from("evidence").createObjectUrl(path);
+    if (error || !data) { toast.error(error?.message ?? "Could not open local file"); return; }
+    window.open(data.localUrl, "_blank", "noopener");
+    window.setTimeout(() => URL.revokeObjectURL(data.localUrl), 60_000);
   }
 
   async function onFiles(files: FileList | null) {
@@ -125,7 +126,7 @@ export function EvidencePanel({ assessmentId, organisationId, pillarAssessmentId
                   {it.storage_path && (
                     <button
                       type="button"
-                      onClick={() => openSigned(it.storage_path)}
+                      onClick={() => openLocalFile(it.storage_path)}
                       className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
                     >
                       <ExternalLink className="h-3 w-3" /> Open

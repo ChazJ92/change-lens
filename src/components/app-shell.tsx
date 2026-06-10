@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getBrowserDataClient } from "@/lib/local-data";
-import { useAuth } from "@/lib/auth";
+import { useLocalSession } from "@/lib/local-session";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -10,7 +10,6 @@ import {
   Users,
   Settings,
   ChevronDown,
-  LogOut,
   Sparkles,
   Plus,
   Search,
@@ -30,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/brand";
 import { useAiSettings, aiEnabled, PROVIDER_LABELS } from "@/lib/ai-config";
-import { resetLocalData } from "@/lib/data";
+import { getLocalPreference, LOCAL_PREF_KEYS, resetLocalData, setLocalPreference } from "@/lib/data";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -40,7 +39,7 @@ const NAV = [
 ];
 
 export function useCurrentOrg() {
-  const { user } = useAuth();
+  const { user } = useLocalSession();
   return useQuery({
     queryKey: ["current-org", user?.id],
     enabled: !!user,
@@ -56,7 +55,7 @@ export function useCurrentOrg() {
         .filter(Boolean);
       const preferred =
         orgs.find((o: any) => !o.is_demo) ?? orgs[0] ?? null;
-      const stored = typeof window !== "undefined" ? localStorage.getItem("core7.org") : null;
+      const stored = await getLocalPreference<string>(LOCAL_PREF_KEYS.currentOrganisationId);
       const current = orgs.find((o: any) => o.id === stored) ?? preferred;
       return { orgs, current };
     },
@@ -64,9 +63,8 @@ export function useCurrentOrg() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user } = useLocalSession();
   const { data } = useCurrentOrg();
-  const navigate = useNavigate();
   const location = useLocation();
   const [orgMenu, setOrgMenu] = useState(false);
 
@@ -75,20 +73,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: aiSettings } = useAiSettings(current?.id);
   const aiOn = aiEnabled(aiSettings);
 
-  async function signOut() {
-    const db = await getBrowserDataClient();
-    await db.auth.signOut();
-    navigate({ to: "/" });
-  }
-
-  function pickOrg(id: string) {
-    localStorage.setItem("core7.org", id);
+  async function pickOrg(id: string) {
+    await setLocalPreference(LOCAL_PREF_KEYS.currentOrganisationId, id);
     window.location.reload();
   }
 
-  function resetDemoData() {
-    resetLocalData();
-    localStorage.removeItem("core7.org");
+  async function resetDemoData() {
+    await resetLocalData();
     window.location.reload();
   }
 
@@ -200,15 +191,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link to="/app/settings/ai"><Sparkles className="h-4 w-4 mr-2" /> AI settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/app/settings/ai"><Sparkles className="h-4 w-4 mr-2" /> AI settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                   <Link to="/app/organisation"><Settings className="h-4 w-4 mr-2" /> Organisation settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled><Users className="h-4 w-4 mr-2" /> Team (coming)</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={resetDemoData}><Plus className="h-4 w-4 mr-2" /> Reset demo data</DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut}><LogOut className="h-4 w-4 mr-2" /> Sign out</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/"><FileBarChart2 className="h-4 w-4 mr-2" /> Local demo home</Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

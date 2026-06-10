@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { repositories as repo } from "@/lib/data";
 import { useCurrentOrg, PageHeader } from "@/components/app-shell";
-import { useAuth } from "@/lib/auth";
+import { useLocalSession } from "@/lib/local-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -213,7 +213,7 @@ function confidenceLabel(pct: number, complete: boolean): { label: string; tone:
 }
 
 function NewAssessment() {
-  const { user } = useAuth();
+  const { user } = useLocalSession();
   const { data: orgData } = useCurrentOrg();
   const orgId = orgData?.current?.id;
   const navigate = useNavigate();
@@ -319,7 +319,7 @@ function NewAssessment() {
         ? Math.round(profile.topDrivers.reduce((s, d) => s + d.score, 0) / profile.topDrivers.length)
         : 0;
       const complexity = avg >= 67 ? "High" : avg >= 34 ? "Medium" : "Low";
-      const a = repo.assessments.create({
+      const a = await repo.assessments.create({
         organisation_id: orgId,
         name: form.title,
         description: form.description || null,
@@ -338,15 +338,15 @@ function NewAssessment() {
       // Apply equal starting weights at the assessment level via weight_override
       // so global seeded pillar defaults are not inherited. These remain fully
       // overridable later in the readiness workspace.
-      for (const p of repo.pillars.list()) {
-        repo.pillarAssessments.create({
+      for (const p of await repo.pillars.list()) {
+        await repo.pillarAssessments.create({
           assessment_id: a.id,
           pillar_id: p.id,
           status: "not_started",
           weight_override: EQUAL_PILLAR_WEIGHT,
         });
       }
-      repo.activity.log({
+      await repo.activity.log({
         organisation_id: orgId,
         assessment_id: a.id,
         actor_id: user!.id,

@@ -22,15 +22,21 @@ function Reviews() {
     queryKey: ["reviews", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const assessments = repo.assessments.listByOrg(orgId!);
+      const assessments = await repo.assessments.listByOrg(orgId!);
       const aIds = new Set(assessments.map((r) => r.id));
-      const rows = repo.pillarAssessments.list().filter((row) => aIds.has(row.assessment_id));
+      const [pillarAssessments, pillars, comments, overrides] = await Promise.all([
+        repo.pillarAssessments.list(),
+        repo.pillars.list(),
+        repo.reviewComments.list(),
+        repo.scoreOverrides.list(),
+      ]);
+      const rows = pillarAssessments.filter((row) => aIds.has(row.assessment_id));
       return {
         assessments,
         pas: rows,
-        pillars: repo.pillars.list(),
-        comments: repo.reviewComments.list(),
-        overrides: repo.scoreOverrides.list(),
+        pillars,
+        comments,
+        overrides,
       };
     },
   });

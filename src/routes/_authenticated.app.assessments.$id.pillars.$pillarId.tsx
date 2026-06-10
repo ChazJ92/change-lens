@@ -23,19 +23,27 @@ function PillarDetail() {
   const { data, isLoading } = useQuery({
     queryKey: ["pillar", id, pillarId],
     queryFn: async () => {
-      const pa = repo.pillarAssessments
-        .listByAssessment(id)
+      const pillarAssessments = await repo.pillarAssessments.listByAssessment(id);
+      const pa = pillarAssessments
         .find((p) => p.pillar_id === pillarId) ?? null;
       const paId = pa?.id;
-      const assessment = repo.assessments.get(id);
+      const [assessment, pillar, questions, comments, overrides, risks, recs] = await Promise.all([
+        repo.assessments.get(id),
+        repo.pillars.get(pillarId),
+        repo.questions.listByPillar(pillarId),
+        paId ? repo.reviewComments.listByPillarAssessment(paId) : Promise.resolve([]),
+        paId ? repo.scoreOverrides.listByPillarAssessment(paId) : Promise.resolve([]),
+        repo.risks.listByAssessment(id),
+        repo.recommendations.listByAssessment(id),
+      ]);
       return {
-        pillar: repo.pillars.get(pillarId),
+        pillar,
         pa,
-        questions: repo.questions.listByPillar(pillarId),
-        comments: paId ? repo.reviewComments.listByPillarAssessment(paId) : [],
-        overrides: paId ? repo.scoreOverrides.listByPillarAssessment(paId) : [],
-        risks: repo.risks.listByAssessment(id).filter((r) => r.pillar_id === pillarId),
-        recs: repo.recommendations.listByAssessment(id).filter((r) => r.pillar_id === pillarId),
+        questions,
+        comments,
+        overrides,
+        risks: risks.filter((r) => r.pillar_id === pillarId),
+        recs: recs.filter((r) => r.pillar_id === pillarId),
         organisationId: assessment?.organisation_id as string | undefined,
       };
     },
@@ -44,7 +52,7 @@ function PillarDetail() {
   const transition = useMutation({
     mutationFn: async (status: any) => {
       if (!data?.pa?.id) return;
-      repo.pillarAssessments.update(data.pa.id, { status });
+      await repo.pillarAssessments.update(data.pa.id, { status });
     },
     onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["pillar"] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
