@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { repositories as repo } from "@/lib/data";
-import { useAuth } from "@/lib/auth";
+import { LOCAL_PREF_KEYS, repositories as repo, setLocalPreference } from "@/lib/data";
+import { useLocalSession } from "@/lib/local-session";
 
 export const Route = createFileRoute("/_authenticated/app/organisation")({
   component: OrganisationPage,
 });
 
 function OrganisationPage() {
-  const { user } = useAuth();
+  const { user } = useLocalSession();
   const qc = useQueryClient();
   const { data: orgData } = useCurrentOrg();
   const currentOrgId = orgData?.current?.id;
@@ -25,7 +25,7 @@ function OrganisationPage() {
     queryKey: ["organisation-profile", currentOrgId],
     enabled: !!currentOrgId,
     queryFn: async () => {
-      const org = repo.organisations.get(currentOrgId!);
+      const org = await repo.organisations.get(currentOrgId!);
       if (!org) throw new Error("Organisation not found");
       return org;
     },
@@ -70,7 +70,7 @@ function OrganisationPage() {
   const saveProfile = useMutation({
     mutationFn: async () => {
       if (!currentOrgId) throw new Error("No organisation selected");
-      if (!repo.organisations.isAdmin(currentOrgId, user!.id)) {
+      if (!(await repo.organisations.isAdmin(currentOrgId, user!.id))) {
         throw new Error("You need admin access to edit this organisation");
       }
       const payload = {
@@ -83,7 +83,7 @@ function OrganisationPage() {
       };
       if (!payload.name) throw new Error("Organisation name is required");
 
-      repo.organisations.update(currentOrgId, payload);
+      await repo.organisations.update(currentOrgId, payload);
     },
     onSuccess: async () => {
       await Promise.all([
@@ -99,7 +99,7 @@ function OrganisationPage() {
     mutationFn: async () => {
       const name = newOrg.name.trim();
       if (!name) throw new Error("Organisation name is required");
-      const org = repo.organisations.createWithMembership(
+      const org = await repo.organisations.createWithMembership(
         {
           name,
           sector: emptyToNull(newOrg.sector),
@@ -113,7 +113,7 @@ function OrganisationPage() {
       return org.id;
     },
     onSuccess: async (orgId) => {
-      localStorage.setItem("core7.org", orgId);
+      await setLocalPreference(LOCAL_PREF_KEYS.currentOrganisationId, orgId);
       await qc.invalidateQueries({ queryKey: ["current-org"] });
       toast.success("Organisation created. Switched to the new workspace.");
       window.location.reload();

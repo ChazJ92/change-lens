@@ -1,7 +1,7 @@
 import { getLocalDataClient } from "@/lib/data";
 
 /**
- * Returns the singleton browser data client (localStorage-backed).
+ * Returns the singleton browser data client (Dexie-backed).
  * Throws during server rendering — callers must run in the browser.
  */
 export async function getBrowserDataClient() {

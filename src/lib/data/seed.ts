@@ -20,7 +20,7 @@ const days = (n: number) => n * 24 * 60 * 60 * 1000;
 const hours = (n: number) => n * 60 * 60 * 1000;
 const aheadDays = (n: number) => new Date(NOW + days(n)).toISOString().slice(0, 10);
 
-/** The signed-in user used by the local auth provider. */
+/** The demo user used by the local browser-only session. */
 export const LOCAL_USER = {
   id: "00000000-0000-4000-8000-000000000001",
   aud: "authenticated",

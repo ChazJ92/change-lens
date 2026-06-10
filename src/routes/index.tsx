@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { useAuth } from "@/lib/auth";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Wordmark, LensMark } from "@/components/brand";
 import { ShieldCheck, FileText, GitBranch, ScanSearch, ChevronRight } from "lucide-react";
@@ -17,12 +15,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (!loading && user) navigate({ to: "/app" });
-  }, [user, loading, navigate]);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card">
@@ -131,7 +123,8 @@ function Index() {
           <div>
             <p className="eyebrow mb-1.5">Try the platform</p>
             <p className="text-sm text-muted-foreground max-w-xl">
-              New accounts are added to <span className="font-mono text-foreground">Northwind Industrials</span>, a fully-populated demo organisation with a worked ERP &amp; operating model assessment.
+              Open a seeded local workspace with demo organisations and worked
+              assessments. Everything persists in this browser only.
             </p>
           </div>
           <Button asChild className="rounded-sm">

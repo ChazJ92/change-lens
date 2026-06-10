@@ -1,10 +1,10 @@
 import { RELATIONS, type Row, type TableName } from "./db";
 import { getAll, insertRows, updateWhere, deleteWhere } from "./store";
 import { LOCAL_SESSION, LOCAL_USER } from "./seed";
-import { getEvidenceBlobUrl, removeEvidenceBlobs, storeEvidenceBlob } from "./blobs";
+import { getEvidenceBlobObjectUrl, removeEvidenceBlobs, storeEvidenceBlob } from "./blobs";
 
 /**
- * localStorage-backed query-builder, auth and storage client.
+ * Dexie-backed local query-builder, session and file client.
  *
  * Implements the subset of APIs the app uses, delegating reads/writes to the
  * shared local store. Screens with embedded selects use this client; domain
@@ -50,7 +50,7 @@ function parseToken(token: string): { name: string; inner: string | null } {
   return { name, inner };
 }
 
-function resolveEmbedded(table: TableName, row: Record<string, unknown>, selectStr: string): Record<string, unknown> {
+async function resolveEmbedded(table: TableName, row: Record<string, unknown>, selectStr: string): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = { ...row };
   for (const token of splitTopLevel(selectStr)) {
     const { name, inner } = parseToken(token);
@@ -58,15 +58,15 @@ function resolveEmbedded(table: TableName, row: Record<string, unknown>, selectS
     const rel = RELATIONS[table]?.[name];
     if (!rel) continue;
     if (rel.kind === "to-one") {
-      const target = getAll(rel.target).find(
+      const target = (await getAll(rel.target)).find(
         (r) => (r as Record<string, unknown>)[rel.targetKey] === row[rel.fk],
       ) as Record<string, unknown> | undefined;
-      result[name] = target ? resolveEmbedded(rel.target, target, inner || "*") : null;
+      result[name] = target ? await resolveEmbedded(rel.target, target, inner || "*") : null;
     } else {
-      const targets = getAll(rel.target).filter(
+      const targets = (await getAll(rel.target)).filter(
         (r) => (r as Record<string, unknown>)[rel.fk] === row[rel.localKey],
       ) as Record<string, unknown>[];
-      result[name] = targets.map((t) => resolveEmbedded(rel.target, t, inner || "*"));
+      result[name] = await Promise.all(targets.map((t) => resolveEmbedded(rel.target, t, inner || "*")));
     }
   }
   return result;
@@ -112,8 +112,8 @@ class SelectQuery<T extends TableName> implements PromiseLike<Result<Row<T>[] | 
     return this;
   }
 
-  private run(): Result<Row<T>[] | Row<T> | null> {
-    let rows = getAll(this.table) as Record<string, unknown>[];
+  private async run(): Promise<Result<Row<T>[] | Row<T> | null>> {
+    let rows = (await getAll(this.table)) as Record<string, unknown>[];
     for (const f of this.filters) {
       if (f.op === "eq") rows = rows.filter((r) => r[f.col] === f.val);
       else rows = rows.filter((r) => f.vals.includes(r[f.col]));
@@ -134,7 +134,7 @@ class SelectQuery<T extends TableName> implements PromiseLike<Result<Row<T>[] | 
     }
     if (this.limitN != null) rows = rows.slice(0, this.limitN);
     if (hasEmbeds(this.table, this.selectStr)) {
-      rows = rows.map((r) => resolveEmbedded(this.table, r, this.selectStr));
+      rows = await Promise.all(rows.map((r) => resolveEmbedded(this.table, r, this.selectStr)));
     }
     if (this.rowMode === "single") {
       if (rows.length === 0) return { data: null, error: { message: "No rows found" } };
@@ -150,13 +150,13 @@ class SelectQuery<T extends TableName> implements PromiseLike<Result<Row<T>[] | 
     onfulfilled?: ((value: Result<Row<T>[] | Row<T> | null>) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
-    return Promise.resolve(this.run()).then(onfulfilled, onrejected);
+    return this.run().then(onfulfilled, onrejected);
   }
 }
 
 function withInsertDefaults<T extends TableName>(table: T, row: Record<string, unknown>): Row<T> {
   const next = { ...row };
-  if (next.id == null) next.id = uid();
+  if (table !== "organisation_ai_keys" && table !== "organisation_ai_settings" && next.id == null) next.id = uid();
   if (next.created_at == null) next.created_at = new Date().toISOString();
   if (next.updated_at == null) next.updated_at = new Date().toISOString();
   if (table === "survey_recipients" && next.token == null) next.token = uid();
@@ -178,9 +178,9 @@ class InsertQuery<T extends TableName> implements PromiseLike<Result<Row<T>[] | 
     return this;
   }
 
-  private run(): Result<Row<T>[] | Row<T> | null> {
+  private async run(): Promise<Result<Row<T>[] | Row<T> | null>> {
     const prepared = this.rows.map((r) => withInsertDefaults(this.table, r));
-    const inserted = insertRows(this.table, prepared);
+    const inserted = await insertRows(this.table, prepared);
     if (this.single_) return { data: inserted[0] ?? null, error: null };
     if (this.returnRows) return { data: inserted, error: null };
     return { data: null, error: null };
@@ -190,7 +190,7 @@ class InsertQuery<T extends TableName> implements PromiseLike<Result<Row<T>[] | 
     onfulfilled?: ((value: Result<Row<T>[] | Row<T> | null>) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
-    return Promise.resolve(this.run()).then(onfulfilled, onrejected);
+    return this.run().then(onfulfilled, onrejected);
   }
 }
 
@@ -214,13 +214,13 @@ class MutationQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>
   private matches = (row: Record<string, unknown>) =>
     this.filters.every((f) => (f.op === "eq" ? row[f.col] === f.val : f.vals.includes(row[f.col])));
 
-  private run(): Result<Row<T>[]> {
+  private async run(): Promise<Result<Row<T>[]>> {
     if (this.kind === "delete") {
-      deleteWhere(this.table, this.matches as (r: Row<T>) => boolean);
+      await deleteWhere(this.table, this.matches as (r: Row<T>) => boolean);
       return { data: [], error: null };
     }
     const patch = { ...(this.patch ?? {}) };
-    const updated = updateWhere(this.table, this.matches as (r: Row<T>) => boolean, patch as Partial<Row<T>>);
+    const updated = await updateWhere(this.table, this.matches as (r: Row<T>) => boolean, patch as Partial<Row<T>>);
     return { data: updated, error: null };
   }
 
@@ -228,7 +228,7 @@ class MutationQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>
     onfulfilled?: ((value: Result<Row<T>[]>) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
-    return Promise.resolve(this.run()).then(onfulfilled, onrejected);
+    return this.run().then(onfulfilled, onrejected);
   }
 }
 
@@ -240,20 +240,20 @@ function upsertConflictKey(table: TableName): string {
 class UpsertQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>> {
   constructor(private table: T, private row: Record<string, unknown>) {}
 
-  private run(): Result<Row<T>[]> {
+  private async run(): Promise<Result<Row<T>[]>> {
     const prepared = withInsertDefaults(this.table, this.row);
     const key = upsertConflictKey(this.table);
     const keyVal = (prepared as Record<string, unknown>)[key];
-    const exists = getAll(this.table).some((r) => (r as Record<string, unknown>)[key] === keyVal);
+    const exists = (await getAll(this.table)).some((r) => (r as Record<string, unknown>)[key] === keyVal);
     if (exists) {
-      const updated = updateWhere(
+      const updated = await updateWhere(
         this.table,
         (r) => (r as Record<string, unknown>)[key] === keyVal,
         prepared as Partial<Row<T>>,
       );
       return { data: updated, error: null };
     }
-    const inserted = insertRows(this.table, [prepared as Row<T>]);
+    const inserted = await insertRows(this.table, [prepared as Row<T>]);
     return { data: inserted, error: null };
   }
 
@@ -261,7 +261,7 @@ class UpsertQuery<T extends TableName> implements PromiseLike<Result<Row<T>[]>> 
     onfulfilled?: ((value: Result<Row<T>[]>) => R1 | PromiseLike<R1>) | null,
     onrejected?: ((reason: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
-    return Promise.resolve(this.run()).then(onfulfilled, onrejected);
+    return this.run().then(onfulfilled, onrejected);
   }
 }
 
@@ -276,7 +276,7 @@ function from<T extends TableName>(table: T) {
   };
 }
 
-// ---- Auth + storage ----------------------------------------------------------
+// ---- Local demo session + file adapter ---------------------------------------
 
 const auth = {
   async getSession() {
@@ -286,17 +286,8 @@ const auth = {
     return { data: { user: LOCAL_USER }, error: null };
   },
   onAuthStateChange(callback: (event: string, session: typeof LOCAL_SESSION) => void) {
-    Promise.resolve().then(() => callback("SIGNED_IN", LOCAL_SESSION));
+    Promise.resolve().then(() => callback("LOCAL_SESSION_READY", LOCAL_SESSION));
     return { data: { subscription: { unsubscribe() {} } } };
-  },
-  async signOut() {
-    return { error: null };
-  },
-  async signInWithPassword() {
-    return { data: { session: LOCAL_SESSION, user: LOCAL_USER }, error: null };
-  },
-  async signUp() {
-    return { data: { session: LOCAL_SESSION, user: LOCAL_USER }, error: null };
   },
 };
 
@@ -313,13 +304,13 @@ const storage = {
         }
       },
       async remove(paths: string[]) {
-        removeEvidenceBlobs(paths);
+        await removeEvidenceBlobs(paths);
         return { data: [], error: null };
       },
-      async createSignedUrl(path: string, _expiresInSeconds?: number) {
-        const signedUrl = getEvidenceBlobUrl(path);
-        if (!signedUrl) return { data: null, error: { message: "File not found in local storage" } };
-        return { data: { signedUrl }, error: null };
+      async createObjectUrl(path: string) {
+        const localUrl = await getEvidenceBlobObjectUrl(path);
+        if (!localUrl) return { data: null, error: { message: "File not found in local IndexedDB storage" } };
+        return { data: { localUrl }, error: null };
       },
     };
   },
@@ -331,7 +322,7 @@ function buildClient() {
   return { from, auth, storage };
 }
 
-/** Returns a singleton localStorage-backed data client. */
+/** Returns a singleton Dexie-backed local data client. */
 export function getLocalDataClient() {
   client ??= buildClient();
   return client;

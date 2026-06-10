@@ -97,7 +97,7 @@ function AiSettingsPage() {
       <PageHeader
         eyebrow="Organisation settings"
         title="AI configuration"
-        description="CORE7 uses bring-your-own-key (BYOK) so AI runs against your own provider account. Verification is required before AI actions are enabled across the organisation."
+        description="Local testing uses bring-your-own-key (BYOK) calls directly from this browser. Verification is required before AI actions are enabled for this local workspace."
         actions={
           active ? (
             <StatusChip label="AI enabled" tone="success" />
@@ -160,8 +160,9 @@ function AiSettingsPage() {
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-                  Keys are stored locally in your browser (base64-encoded) and
-                  never returned in plain text. Only organisation admins can change AI settings.
+                  Temporary testing only: keys are stored in this browser's
+                  local IndexedDB and base64-encoded for obfuscation. This is
+                  not encrypted or secure secret storage.
                 </p>
               </div>
 
@@ -220,10 +221,9 @@ function AiSettingsPage() {
               <Info className="h-3.5 w-3.5" /> <span className="font-medium">Why BYOK?</span>
             </div>
             <p className="text-muted-foreground">
-              CORE7 never proxies your evidence through a shared inference
-              account. AI calls go from this organisation directly to your
-              provider, so prompts, evidence, and rationale stay inside your
-              tenancy and your billing.
+              In this local prototype, AI calls are made from your browser
+              directly to the selected provider using the key you enter here.
+              No ChangeLens backend or shared inference account is involved.
             </p>
           </div>
           <div className="border border-border rounded-sm bg-card p-4 text-xs">

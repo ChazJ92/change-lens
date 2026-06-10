@@ -24,8 +24,7 @@ function Dashboard() {
     queryKey: ["assessments", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      return repo.assessments
-        .listByOrg(orgId!)
+      return (await repo.assessments.listByOrg(orgId!))
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     },
   });
@@ -35,8 +34,9 @@ function Dashboard() {
     enabled: !!orgId && !!assessments?.length,
     queryFn: async () => {
       const ids = new Set(assessments!.map((a: any) => a.id));
-      const pa = repo.pillarAssessments.list().filter((row) => ids.has(row.assessment_id));
-      const wmap = new Map(repo.pillars.list().map((x) => [x.id, Number(x.default_weight)]));
+      const [pillarAssessments, pillars] = await Promise.all([repo.pillarAssessments.list(), repo.pillars.list()]);
+      const pa = pillarAssessments.filter((row) => ids.has(row.assessment_id));
+      const wmap = new Map(pillars.map((x) => [x.id, Number(x.default_weight)]));
       return pa.map((row: any) => ({
         ...row,
         weight: wmap.get(row.pillar_id) ?? 0,

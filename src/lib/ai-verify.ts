@@ -86,10 +86,10 @@ export async function verifyAndMaybeSaveAiSettings(input: {
   if (e1) throw new Error(e1.message);
 
   if (result.ok) {
-    const encrypted = btoa(apiKey);
+    const encodedKey = btoa(apiKey);
     const { error: e2 } = await db.from("organisation_ai_keys").upsert({
       organisation_id: organisationId,
-      encrypted_key: encrypted,
+      encoded_key: encodedKey,
       updated_at: verifiedAt,
     });
     if (e2) throw new Error(e2.message);

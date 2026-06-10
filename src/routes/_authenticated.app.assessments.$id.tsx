@@ -26,13 +26,21 @@ function AssessmentOverview() {
   const { data, isLoading } = useQuery({
     queryKey: ["assessment", id],
     queryFn: async () => {
+      const [a, pa, p, risks, recs, act] = await Promise.all([
+        repo.assessments.get(id),
+        repo.pillarAssessments.listByAssessment(id),
+        repo.pillars.list(),
+        repo.risks.listByAssessment(id),
+        repo.recommendations.listByAssessment(id),
+        repo.activity.listByAssessment(id, 10),
+      ]);
       return {
-        a: repo.assessments.get(id),
-        pa: repo.pillarAssessments.listByAssessment(id),
-        p: repo.pillars.list(),
-        risks: repo.risks.listByAssessment(id),
-        recs: repo.recommendations.listByAssessment(id),
-        act: repo.activity.listByAssessment(id, 10),
+        a,
+        pa,
+        p,
+        risks,
+        recs,
+        act,
       };
     },
   });

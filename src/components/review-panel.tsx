@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { repositories as repo } from "@/lib/data";
-import { useAuth } from "@/lib/auth";
+import { useLocalSession } from "@/lib/local-session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ export function ReviewPanel({
   organisationId: string;
   pillarName: string;
 }) {
-  const { user } = useAuth();
+  const { user } = useLocalSession();
   const qc = useQueryClient();
   const [mode, setMode] = useState<"idle" | "changes" | "override">("idle");
   const [comment, setComment] = useState("");
@@ -49,14 +49,14 @@ export function ReviewPanel({
       const finalScore = pa.final_score ?? pa.provisional_score;
       const upd: any = { status: "complete", reviewed_at: new Date().toISOString() };
       if (pa.final_score == null && finalScore != null) upd.final_score = finalScore;
-      repo.pillarAssessments.update(pa.id, upd);
-      repo.reviewComments.create({
+      await repo.pillarAssessments.update(pa.id, upd);
+      await repo.reviewComments.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         decision: "approved",
         comment: comment.trim() || `Approved — pillar ${pillarName} signed off.`,
       });
-      repo.activity.log({
+      await repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,
@@ -77,14 +77,14 @@ export function ReviewPanel({
   const requestChanges = useMutation({
     mutationFn: async () => {
       if (!comment.trim()) throw new Error("A note is required when requesting changes.");
-      repo.pillarAssessments.update(pa.id, { status: "changes_requested" });
-      repo.reviewComments.create({
+      await repo.pillarAssessments.update(pa.id, { status: "changes_requested" });
+      await repo.reviewComments.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         decision: "changes_requested",
         comment: comment.trim(),
       });
-      repo.activity.log({
+      await repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,
@@ -108,18 +108,18 @@ export function ReviewPanel({
       if (!Number.isFinite(ns) || ns < 1 || ns > 5) throw new Error("Score must be between 1 and 5.");
       if (!rationale.trim() || rationale.trim().length < 8) throw new Error("Rationale is required (min 8 chars).");
       const previous = pa.final_score ?? pa.provisional_score ?? null;
-      repo.scoreOverrides.create({
+      await repo.scoreOverrides.create({
         pillar_assessment_id: pa.id,
         author_id: user!.id,
         previous_score: previous,
         new_score: ns,
         rationale: rationale.trim(),
       });
-      repo.pillarAssessments.update(pa.id, {
+      await repo.pillarAssessments.update(pa.id, {
         final_score: ns,
         status: pa.status === "complete" ? "complete" : "ready_for_review",
       });
-      repo.activity.log({
+      await repo.activity.log({
         organisation_id: organisationId,
         assessment_id: assessmentId,
         actor_id: user!.id,

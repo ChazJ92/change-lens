@@ -1,7 +1,7 @@
 import type { Database } from "./types";
 
 /**
- * Shared type aliases for the localStorage-backed data layer.
+ * Shared type aliases for the Dexie-backed local data layer.
  *
  * Row/insert/update shapes mirror the application schema so a future backend
  * can implement the same `DataRepositories` interface without touching callers.
@@ -13,7 +13,7 @@ export type Row<T extends TableName> = Tables[T]["Row"];
 export type Insert<T extends TableName> = Tables[T]["Insert"];
 export type Update<T extends TableName> = Tables[T]["Update"];
 
-/** The complete in-memory database shape persisted to localStorage. */
+/** The complete local database shape persisted to IndexedDB. */
 export type LocalDb = { [K in TableName]: Row<K>[] };
 
 /** Every table name, used to build a fully-populated empty database. */
